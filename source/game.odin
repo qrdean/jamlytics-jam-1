@@ -105,8 +105,12 @@ Dialog :: struct {
 	dialog_text: [dynamic]string,
 }
 
-all_dialog: [NpcType][]string = {
-	.AMANDA = []string {
+DialogMapEnum :: enum {
+	AMANDA_1,
+}
+
+all_dialog: [DialogMapEnum][]string = {
+	.AMANDA_1 = []string {
 		"Hey there my name is Amanda",
 		"Are you ready to get started?",
 		"Great job, you are doing great!",
@@ -147,7 +151,7 @@ ui_camera :: proc() -> rl.Camera2D {
 	return {zoom = f32(rl.GetScreenHeight()) / PIXEL_WINDOW_HEIGHT}
 }
 
-load_dialog :: proc(npc_type: NpcType) -> [dynamic]string {
+load_dialog :: proc(npc_type: DialogMapEnum) -> [dynamic]string {
 	dialog_text := make([dynamic]string, context.allocator)
 	dialog_slices := all_dialog[npc_type]
 	for dialog_slice in dialog_slices {
@@ -264,7 +268,7 @@ handle_npc_interactions :: proc() {
 	if g.amanda.in_range {
 		if rl.IsKeyPressed(.E) {
 			delete(g.current_dialog.dialog_text)
-			g.current_dialog = Dialog{1, .AMANDA, .Amanda, "amanda", load_dialog(.AMANDA)}
+			g.current_dialog = Dialog{1, .AMANDA, .Amanda, "amanda", load_dialog(.AMANDA_1)}
 			g.current_dialog_step = 0
 			g.game_state = .DIALOGUE
 		}
@@ -299,7 +303,7 @@ update :: proc(dt: f32) {
 				g.current_dialog_step += 1
 			}
 		}
-		g.current_dialog_frame += 1
+		g.current_dialog_frame += 2
 	case .MAIN:
 		input: rl.Vector2
 
@@ -427,21 +431,28 @@ draw :: proc(dt: f32) {
 	)
 
 	if g.game_state == .DIALOGUE {
-		text := g.current_dialog.dialog_text[g.current_dialog_step]
-		dialog_pos_y := PIXEL_WINDOW_HEIGHT - DIALOG_SIZE_HEIGHT
-		fmt.println(dialog_pos_y)
-		rl.DrawRectangle(5, i32(dialog_pos_y), DIALOG_SIZE_WIDTH, DIALOG_SIZE_HEIGHT, rl.BLACK)
-		subtext := rl.TextSubtext(
-			strings.clone_to_cstring(text, context.temp_allocator),
-			0,
-			i32(g.current_dialog_frame / 10),
-		)
-		rl.DrawText(subtext, 5, i32(dialog_pos_y), 8, rl.WHITE)
+		draw_dialog(g.current_dialog, g.current_dialog_step, g.current_dialog_frame)
 	}
 
 	rl.EndMode2D()
 
 	rl.EndDrawing()
+}
+
+draw_dialog :: proc(current_dialog: Dialog, dialog_step: int, dialog_frame: int) {
+	text := current_dialog.dialog_text[dialog_step]
+	dialog_pos_y := PIXEL_WINDOW_HEIGHT - DIALOG_SIZE_HEIGHT - 2
+	rl.DrawRectangle(5, i32(dialog_pos_y), DIALOG_SIZE_WIDTH, DIALOG_SIZE_HEIGHT, rl.BLACK)
+	subtext := rl.TextSubtext(
+		strings.clone_to_cstring(text, context.temp_allocator),
+		0,
+		i32(dialog_frame / 10),
+	)
+	texture := atlas_textures[current_dialog.npc_texture]
+	rl.DrawTextureRec(g.atlas, texture.rect, Vec2{7., f32(dialog_pos_y + 2)}, rl.WHITE)
+	text_pos_x := texture.rect.width + 15
+	txt := fmt.ctprintf("%v: %v", current_dialog.npc_name, subtext)
+	rl.DrawText(txt, i32(text_pos_x), i32(dialog_pos_y), 8, rl.WHITE)
 }
 
 // Draw Helpers
@@ -496,7 +507,7 @@ game_init :: proc() {
 		player_texture       = rl.LoadTexture("assets/round_cat.png"),
 		atlas                = rl.LoadTextureFromImage(atlas_image),
 		test_anim            = animation_create(.Test),
-		current_dialog       = Dialog{1, .AMANDA, .Amanda, "amanda", load_dialog(.AMANDA)},
+		current_dialog       = Dialog{1, .AMANDA, .Amanda, "amanda", load_dialog(.AMANDA_1)},
 		current_dialog_step  = 0,
 		current_dialog_frame = 0,
 
