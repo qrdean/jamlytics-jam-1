@@ -63,16 +63,6 @@ Game_State :: enum {
 	DIALOGUE,
 }
 
-// EntityType :: enum {
-// 	NONE,
-// 	PLAYER,
-// }
-//
-// Entity :: struct {
-// 	pos:  rl.Vector2,
-// 	type: EntityType,
-// }
-
 ItemType :: enum {
 	NONE,
 	SCREWDRIVER,
@@ -93,7 +83,7 @@ Item :: struct {
 	type:         ItemType,
 }
 
-NPC :: struct {
+Npc :: struct {
 	id:           NpcType,
 	pos:          Vec2,
 	rect:         Rect,
@@ -104,18 +94,44 @@ NPC :: struct {
 	item_given:   bool,
 }
 
+DIALOG_SIZE_HEIGHT :: 64
+DIALOG_SIZE_WIDTH :: 720
+
+Dialog :: struct {
+	id:          int,
+	npc:         NpcType,
+	npc_texture: Texture_Name,
+	npc_name:    string,
+	dialog_text: [dynamic]string,
+}
+
+all_dialog: [NpcType][]string = {
+	.AMANDA = []string {
+		"Hey there my name is Amanda",
+		"Are you ready to get started?",
+		"Great job, you are doing great!",
+	},
+}
+
 Game_Memory :: struct {
-	game_state:     Game_State,
-	run:            bool,
-	player_pos:     rl.Vector2,
-	test_anim:      Animation,
-	player_texture: rl.Texture,
-	some_number:    int,
-	atlas:          rl.Texture,
-	font:           rl.Font,
-	screwdriver:    Item,
-	hammer:         Item,
-	amanda:         NPC,
+	game_state:           Game_State,
+	run:                  bool,
+	player_pos:           rl.Vector2,
+	player_texture:       rl.Texture,
+	test_anim:            Animation,
+	some_number:          int,
+	atlas:                rl.Texture,
+	font:                 rl.Font,
+	current_dialog:       Dialog,
+	current_dialog_step:  int,
+	current_dialog_frame: int,
+
+	// Refactor into array
+	screwdriver:          Item,
+	hammer:               Item,
+
+	// Refactor into array
+	amanda:               Npc,
 }
 
 g: ^Game_Memory
@@ -129,6 +145,15 @@ game_camera :: proc() -> rl.Camera2D {
 
 ui_camera :: proc() -> rl.Camera2D {
 	return {zoom = f32(rl.GetScreenHeight()) / PIXEL_WINDOW_HEIGHT}
+}
+
+load_dialog :: proc(npc_type: NpcType) -> [dynamic]string {
+	dialog_text := make([dynamic]string, context.allocator)
+	dialog_slices := all_dialog[npc_type]
+	for dialog_slice in dialog_slices {
+		append(&dialog_text, dialog_slice)
+	}
+	return dialog_text
 }
 
 // pulled from https://github.com/ChrisPHP/odin-tilemap-collision/blob/main/collision.odin
@@ -238,13 +263,15 @@ handle_npc_interactions :: proc() {
 	g.amanda.in_range = collide_with_npc(g.amanda, g.player_pos)
 	if g.amanda.in_range {
 		if rl.IsKeyPressed(.E) {
+			delete(g.current_dialog.dialog_text)
+			g.current_dialog = Dialog{1, .AMANDA, .Amanda, "amanda", load_dialog(.AMANDA)}
+			g.current_dialog_step = 0
 			g.game_state = .DIALOGUE
-			// trigger dialogue
 		}
 	}
 }
 
-collide_with_npc :: proc(npc: NPC, player_pos: Vec2) -> bool {
+collide_with_npc :: proc(npc: Npc, player_pos: Vec2) -> bool {
 	interaction_rect := rl.Rectangle {
 		x      = player_pos.x,
 		y      = player_pos.y,
@@ -258,13 +285,21 @@ collide_with_npc :: proc(npc: NPC, player_pos: Vec2) -> bool {
 update :: proc(dt: f32) {
 	switch g.game_state {
 	case .DIALOGUE:
+		size := len(g.current_dialog.dialog_text)
 		if rl.IsKeyPressed(.Q) {
 			// quit dialogue early
 			g.game_state = .MAIN
 		}
 		if rl.IsKeyPressed(.E) {
 			// continue dialogue
+			g.current_dialog_frame = 0
+			if g.current_dialog_step >= (size - 1) {
+				g.game_state = .MAIN
+			} else {
+				g.current_dialog_step += 1
+			}
 		}
+		g.current_dialog_frame += 1
 	case .MAIN:
 		input: rl.Vector2
 
@@ -321,7 +356,7 @@ draw_item :: proc(item: Item) {
 	}
 }
 
-draw_npc :: proc(npc: NPC) {
+draw_npc :: proc(npc: Npc) {
 	if npc.texture_name != .None {
 		texture := atlas_textures[npc.texture_name]
 		rl.DrawTextureRec(g.atlas, texture.rect, npc.pos, rl.WHITE)
@@ -391,6 +426,19 @@ draw :: proc(dt: f32) {
 		rl.WHITE,
 	)
 
+	if g.game_state == .DIALOGUE {
+		text := g.current_dialog.dialog_text[g.current_dialog_step]
+		dialog_pos_y := PIXEL_WINDOW_HEIGHT - DIALOG_SIZE_HEIGHT
+		fmt.println(dialog_pos_y)
+		rl.DrawRectangle(5, i32(dialog_pos_y), DIALOG_SIZE_WIDTH, DIALOG_SIZE_HEIGHT, rl.BLACK)
+		subtext := rl.TextSubtext(
+			strings.clone_to_cstring(text, context.temp_allocator),
+			0,
+			i32(g.current_dialog_frame / 10),
+		)
+		rl.DrawText(subtext, 5, i32(dialog_pos_y), 8, rl.WHITE)
+	}
+
 	rl.EndMode2D()
 
 	rl.EndDrawing()
@@ -439,18 +487,21 @@ game_init :: proc() {
 	g = new(Game_Memory)
 
 	g^ = Game_Memory {
-		game_state     = .MAIN,
-		run            = true,
-		some_number    = 100,
+		game_state           = .MAIN,
+		run                  = true,
+		some_number          = 100,
 
 		// You can put textures, sounds and music in the `assets` folder. Those
 		// files will be part any release or web build.
-		player_texture = rl.LoadTexture("assets/round_cat.png"),
-		atlas          = rl.LoadTextureFromImage(atlas_image),
-		test_anim      = animation_create(.Test),
+		player_texture       = rl.LoadTexture("assets/round_cat.png"),
+		atlas                = rl.LoadTextureFromImage(atlas_image),
+		test_anim            = animation_create(.Test),
+		current_dialog       = Dialog{1, .AMANDA, .Amanda, "amanda", load_dialog(.AMANDA)},
+		current_dialog_step  = 0,
+		current_dialog_frame = 0,
 
 		// World Items
-		screwdriver    = Item {
+		screwdriver          = Item {
 			Vec2{10., 10.},
 			Rect{10., 10., 16., 16.},
 			"Screwdriver",
@@ -459,7 +510,7 @@ game_init :: proc() {
 			false,
 			.SCREWDRIVER,
 		},
-		hammer         = Item {
+		hammer               = Item {
 			Vec2{20., 30.},
 			Rect{20., 30., 16., 16.},
 			"hammer",
@@ -468,7 +519,7 @@ game_init :: proc() {
 			false,
 			.HAMMER,
 		},
-		amanda         = NPC {
+		amanda               = Npc {
 			.AMANDA,
 			Vec2{14., 100.},
 			Rect{14., 100., 16., 16.},
@@ -499,6 +550,7 @@ game_should_run :: proc() -> bool {
 @(export)
 game_shutdown :: proc() {
 	rl.UnloadTexture(g.atlas)
+	delete(g.current_dialog.dialog_text)
 	free(g)
 }
 
