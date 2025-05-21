@@ -35,28 +35,10 @@ import rl "vendor:raylib"
 ATLAS_DATA :: #load("../assets/atlas.png")
 PIXEL_WINDOW_HEIGHT :: 180
 CELL_SIZE :: 16
-GRID_SIZE :: 10
+GRID_SIZE :: 20
 
 Rect :: rl.Rectangle
 Vec2 :: rl.Vector2
-
-TILE_ENUM :: enum {
-	Floor,
-	Wall,
-}
-
-grid := [GRID_SIZE][GRID_SIZE]TILE_ENUM {
-	{.Floor, .Floor, .Floor, .Floor, .Floor, .Floor, .Floor, .Floor, .Floor, .Floor},
-	{.Floor, .Floor, .Floor, .Floor, .Floor, .Floor, .Floor, .Floor, .Floor, .Floor},
-	{.Floor, .Floor, .Floor, .Wall, .Floor, .Floor, .Floor, .Floor, .Floor, .Floor},
-	{.Floor, .Floor, .Wall, .Wall, .Wall, .Floor, .Wall, .Floor, .Floor, .Floor},
-	{.Floor, .Floor, .Wall, .Wall, .Wall, .Floor, .Wall, .Floor, .Floor, .Floor},
-	{.Floor, .Floor, .Floor, .Wall, .Wall, .Floor, .Wall, .Floor, .Floor, .Floor},
-	{.Floor, .Floor, .Floor, .Floor, .Floor, .Floor, .Wall, .Floor, .Floor, .Floor},
-	{.Floor, .Floor, .Wall, .Wall, .Wall, .Wall, .Floor, .Floor, .Floor, .Floor},
-	{.Floor, .Floor, .Floor, .Floor, .Floor, .Floor, .Floor, .Floor, .Floor, .Floor},
-	{.Floor, .Floor, .Floor, .Floor, .Floor, .Floor, .Floor, .Floor, .Floor, .Floor},
-}
 
 Game_State :: enum {
 	MAIN,
@@ -70,6 +52,7 @@ ItemType :: enum {
 }
 
 NpcType :: enum {
+	ITEM,
 	AMANDA,
 }
 
@@ -80,7 +63,6 @@ Item :: struct {
 	texture_name: Texture_Name,
 	in_range:     bool,
 	collected:    bool,
-	type:         ItemType,
 }
 
 Npc :: struct {
@@ -107,21 +89,31 @@ Dialog :: struct {
 
 DialogMapEnum :: enum {
 	AMANDA_1,
-}
 
-all_dialog: [DialogMapEnum][]string = {
-	.AMANDA_1 = []string {
-		"Hey there my name is Amanda",
-		"Are you ready to get started?",
-		"Great job, you are doing great!",
-	},
+	// Items & Clues 
+	SCREWDRIVER_ITEM,
+	MOVED_BRUSH_CLUE,
+	KEYS_CLUE,
+	SCUFFED_MOSS_CLUE,
+	FOOT_PRINTS_CLUE,
+	CAR_CLUE,
+	CAMPFIRE_CLUE,
+	CLIMBING_GEAR_CLUE,
+	BEAR_MACE_CLUE,
+	STURDY_SPLINT_ITEM,
+	MEDICAL_TAPE_ITEM,
+	PHONE_ITEM,
+	STURDY_TREE_LIMB_CLUE,
+	ROCKS_CLUE,
+	PARACORD_ITEM,
+	BLANKET_ITEM,
 }
 
 Game_Memory :: struct {
 	game_state:           Game_State,
 	run:                  bool,
 	player_pos:           rl.Vector2,
-	player_texture:       rl.Texture,
+	player_texture:       Texture_Name,
 	test_anim:            Animation,
 	some_number:          int,
 	atlas:                rl.Texture,
@@ -133,12 +125,66 @@ Game_Memory :: struct {
 	// Refactor into array
 	screwdriver:          Item,
 	hammer:               Item,
+	moved_brush:          Item,
+	keys:                 Item,
+	scuffed_moss:         Item,
+	foot_prints_tracks:   Item,
+	car:                  Item,
+	campfire:             Item,
+	climbing_gear:        Item,
+	bear_mace:            Item,
+	sturdy_splint:        Item,
+	medical_tape:         Item,
+	phone:                Item,
+	sturdy_tree_limbs:    Item,
+	rocks:                Item,
+	paracord:             Item,
+	blanket:              Item,
 
 	// Refactor into array
 	amanda:               Npc,
 }
 
 g: ^Game_Memory
+
+all_dialog: [DialogMapEnum][]string = {
+	.AMANDA_1              = []string {
+		"Hey there my name is Amanda",
+		"Are you ready to get started?",
+		"Great job, you are doing great!",
+	},
+
+	// Items & Clues
+	.SCREWDRIVER_ITEM      = []string{"This is a Screwdriver"},
+	.MOVED_BRUSH_CLUE      = []string{"Looks like some broken brush."},
+	.KEYS_CLUE             = []string{"A pair of car keys belonging to that truck"},
+	.SCUFFED_MOSS_CLUE     = []string{"The moss on this log has been moved."},
+	.FOOT_PRINTS_CLUE      = []string{"2 sets of foot prints."},
+	.CAR_CLUE              = []string{"This truck matches the description Claire gave"},
+	.CAMPFIRE_CLUE         = []string{"It's been out for days..."},
+	.CLIMBING_GEAR_CLUE    = []string{"Looks like they were avid climbers"},
+	.BEAR_MACE_CLUE        = []string{"An empty can of bear mace."},
+	.STURDY_SPLINT_ITEM    = []string {
+		"Sturdy piece of relatively wood.",
+		"Could use it to help dad.",
+	},
+	.MEDICAL_TAPE_ITEM     = []string{"Medical tape. Can use it to help dad."},
+	.PHONE_ITEM            = []string {
+		"It's dead. Wouldn't do much good anyway without signal though.",
+		"Hope someone is looking for us.",
+		"Mom...",
+	},
+	.STURDY_TREE_LIMB_CLUE = []string{"Sturdy Tree Limb", "Could use these to build a lean two."},
+	.ROCKS_CLUE            = []string {
+		"Sturdy rocks.",
+		"Could use these to weigh down the blanket for the lean two.",
+	},
+	.PARACORD_ITEM         = []string {
+		"Nice strong paracord. Lucky this was in the bag",
+		"Could use this cord to tie the blanket to the trees.",
+	},
+	.BLANKET_ITEM          = []string{"A good warm covering"},
+}
 
 game_camera :: proc() -> rl.Camera2D {
 	w := f32(rl.GetScreenWidth())
@@ -168,8 +214,8 @@ naive_collision :: proc(x, y: f32, moveDirection: [2]f32) -> bool {
 	collision_rect := rl.Rectangle {
 		x      = new_x,
 		y      = new_y,
-		width  = 10.,
-		height = 10.,
+		width  = 16.,
+		height = 16.,
 	}
 
 	//check neighbouring tiles
@@ -233,23 +279,97 @@ player_update :: proc(dt: f32, player_pos: ^Vec2) {
 	}
 }
 
+handle_item_interaction :: proc(item: ^Item, c: proc()) {
+	item.in_range = (collide_with_item(item^, g.player_pos) && !item.collected)
+	if item.in_range {
+		if rl.IsKeyPressed(.E) {
+			c()
+		}
+	}
+}
+
 // This is messy but it works. Could pass in a pointer or something, but it's already
 // a pointer to g so wtf is the point
 handle_item_interactions :: proc() {
-	g.screwdriver.in_range =
-		(collide_with_item(g.screwdriver, g.player_pos) && !g.screwdriver.collected)
-	if g.screwdriver.in_range {
-		if rl.IsKeyPressed(.E) {
-			g.screwdriver.collected = true
-		}
-	}
+	handle_item_interaction(
+		&g.screwdriver,
+		proc() {g.screwdriver.collected = true;handle_dialog(.ITEM, .SCREWDRIVER_ITEM)},
+	)
+	handle_item_interaction(&g.hammer, proc() {g.hammer.collected = true})
+	handle_item_interaction(
+		&g.moved_brush,
+		proc() {g.moved_brush.collected = true;handle_dialog(.ITEM, .MOVED_BRUSH_CLUE)},
+	)
+	handle_item_interaction(
+		&g.keys,
+		proc() {g.keys.collected = true;handle_dialog(.ITEM, .KEYS_CLUE)},
+	)
+	handle_item_interaction(
+		&g.scuffed_moss,
+		proc() {g.scuffed_moss.collected = true;handle_dialog(.ITEM, .SCUFFED_MOSS_CLUE)},
+	)
+	handle_item_interaction(
+		&g.foot_prints_tracks,
+		proc() {g.foot_prints_tracks.collected = true;handle_dialog(.ITEM, .FOOT_PRINTS_CLUE)},
+	)
+	handle_item_interaction(
+		&g.car,
+		proc() {g.car.collected = true;handle_dialog(.ITEM, .CAR_CLUE)},
+	)
+	handle_item_interaction(
+		&g.campfire,
+		proc() {g.campfire.collected = true;handle_dialog(.ITEM, .CAMPFIRE_CLUE)},
+	)
+	handle_item_interaction(
+		&g.climbing_gear,
+		proc() {g.climbing_gear.collected = true;handle_dialog(.ITEM, .CLIMBING_GEAR_CLUE)},
+	)
+	handle_item_interaction(
+		&g.bear_mace,
+		proc() {g.bear_mace.collected = true;handle_dialog(.ITEM, .BEAR_MACE_CLUE)},
+	)
+	handle_item_interaction(
+		&g.sturdy_splint,
+		proc() {g.sturdy_splint.collected = true;handle_dialog(.ITEM, .STURDY_SPLINT_ITEM)},
+	)
+	handle_item_interaction(
+		&g.medical_tape,
+		proc() {g.medical_tape.collected = true;handle_dialog(.ITEM, .MEDICAL_TAPE_ITEM)},
+	)
+	handle_item_interaction(
+		&g.phone,
+		proc() {g.phone.collected = true;handle_dialog(.ITEM, .PHONE_ITEM)},
+	)
+	handle_item_interaction(
+		&g.sturdy_tree_limbs,
+		proc() {g.sturdy_tree_limbs.collected = true;handle_dialog(.ITEM, .STURDY_TREE_LIMB_CLUE)},
+	)
+	handle_item_interaction(
+		&g.rocks,
+		proc() {g.rocks.collected = true;handle_dialog(.ITEM, .ROCKS_CLUE)},
+	)
+	handle_item_interaction(
+		&g.paracord,
+		proc() {g.paracord.collected = true;handle_dialog(.ITEM, .PARACORD_ITEM)},
+	)
+	handle_item_interaction(
+		&g.blanket,
+		proc() {g.blanket.collected = true;handle_dialog(.ITEM, .BLANKET_ITEM)},
+	)
+}
 
-	g.hammer.in_range = (collide_with_item(g.hammer, g.player_pos) && !g.hammer.collected)
-	if g.hammer.in_range {
-		if rl.IsKeyPressed(.E) {
-			g.hammer.collected = true
-		}
+handle_dialog :: proc(npc_type: NpcType, dialog_enum: DialogMapEnum) {
+	dialog: Dialog
+	switch npc_type {
+	case .AMANDA:
+		dialog = Dialog{1, .AMANDA, .Amanda, "Amanda", load_dialog(dialog_enum)}
+	case .ITEM:
+		dialog = Dialog{2, .ITEM, .None, "Item", load_dialog(dialog_enum)}
 	}
+	delete(g.current_dialog.dialog_text)
+	g.current_dialog = dialog
+	g.current_dialog_step = 0
+	g.game_state = .DIALOGUE
 }
 
 collide_with_item :: proc(item: Item, player_pos: Vec2) -> bool {
@@ -397,16 +517,35 @@ draw :: proc(dt: f32) {
 	// origin := rl.Vector2{anim_texture.document_size.x / 2, anim_texture.document_size.y / 2}
 
 	// Static Map
-	// map_rect := atlas_textures[Texture_Name.Map].rect
-	// rl.DrawTextureRec(g.atlas, map_rect, Vec2{0.,0.}, rl.WHITE)
+	// map_rect := atlas_textures[Texture_Name.Test_Map].rect
+	// rl.DrawTextureRec(g.atlas, map_rect, Vec2{0., 0.}, rl.WHITE)
 
 	draw_debug_tiles()
 
 	// rl.DrawTexturePro(g.atlas, test_anim_rect, dest, origin, 0, rl.WHITE)
+	player_rect := atlas_textures[Texture_Name.Ranger_Base].rect
+	rl.DrawTextureRec(g.atlas, player_rect, g.player_pos, rl.WHITE)
 	// rl.DrawTextureEx(g.player_texture, g.player_pos, 0, 1, rl.WHITE)
-	rl.DrawRectangleV(g.player_pos, Vec2{10., 10.}, rl.RAYWHITE)
+
+	// rl.DrawRectangleV(g.player_pos, Vec2{10., 10.}, rl.RAYWHITE)
 	draw_item(g.screwdriver)
 	draw_item(g.hammer)
+	draw_item(g.moved_brush)
+	draw_item(g.keys)
+	draw_item(g.scuffed_moss)
+	draw_item(g.foot_prints_tracks)
+	draw_item(g.car)
+	draw_item(g.campfire)
+	draw_item(g.climbing_gear)
+	draw_item(g.bear_mace)
+	draw_item(g.sturdy_splint)
+	draw_item(g.medical_tape)
+	draw_item(g.phone)
+	draw_item(g.sturdy_tree_limbs)
+	draw_item(g.rocks)
+	draw_item(g.paracord)
+	draw_item(g.blanket)
+
 	draw_npc(g.amanda)
 	rl.EndMode2D()
 
@@ -455,18 +594,47 @@ draw_dialog :: proc(current_dialog: Dialog, dialog_step: int, dialog_frame: int)
 	rl.DrawText(txt, i32(text_pos_x), i32(dialog_pos_y), 8, rl.WHITE)
 }
 
+draw_tile :: proc(x: int, y: int, pos: Vec2, flip_x: bool) {
+	rect := tileset_gameset[x][y]
+
+	if flip_x {
+		rect.width = -rect.width
+	}
+
+	rl.DrawTextureRec(g.atlas, rect, pos, rl.WHITE)
+}
+
 // Draw Helpers
 draw_debug_tiles :: proc() {
 	for i in 0 ..< GRID_SIZE {
 		for j in 0 ..< GRID_SIZE {
 			x := i32(i * CELL_SIZE)
 			y := i32(j * CELL_SIZE)
-
 			// Draw Debug
 			if grid[i][j] == .Wall {
-				rl.DrawRectangle(x, y, 16, 16, rl.RED)
+				// rl.DrawRectangle(x, y, CELL_SIZE, CELL_SIZE, rl.RED)
+				draw_tile(6, 1, {f32(x), f32(y)}, false)
 			} else if grid[i][j] == .Floor {
-				rl.DrawRectangle(x, y, 16, 16, rl.BROWN)
+				// rl.DrawRectangle(x, y, CELL_SIZE, CELL_SIZE, rl.BROWN)
+				draw_tile(5, 2, {f32(x), f32(y)}, false)
+			}
+			rl.DrawRectangleLines(x, y, CELL_SIZE, CELL_SIZE, rl.DARKGRAY)
+		}
+	}
+}
+
+draw_tiles :: proc() {
+	for i in 0 ..< GRID_SIZE {
+		for j in 0 ..< GRID_SIZE {
+			x := i32(i * CELL_SIZE)
+			y := i32(j * CELL_SIZE)
+			// Draw Debug
+			if grid[i][j] == .Wall {
+				// rl.DrawRectangle(x, y, CELL_SIZE, CELL_SIZE, rl.RED)
+				draw_tile(6, 1, {f32(x), f32(y)}, false)
+			} else if grid[i][j] == .Floor {
+				// rl.DrawRectangle(x, y, CELL_SIZE, CELL_SIZE, rl.BROWN)
+				draw_tile(5, 2, {f32(x), f32(y)}, false)
 			}
 			rl.DrawRectangleLines(x, y, CELL_SIZE, CELL_SIZE, rl.DARKGRAY)
 		}
@@ -504,7 +672,6 @@ game_init :: proc() {
 
 		// You can put textures, sounds and music in the `assets` folder. Those
 		// files will be part any release or web build.
-		player_texture       = rl.LoadTexture("assets/round_cat.png"),
 		atlas                = rl.LoadTextureFromImage(atlas_image),
 		test_anim            = animation_create(.Test),
 		current_dialog       = Dialog{1, .AMANDA, .Amanda, "amanda", load_dialog(.AMANDA_1)},
@@ -519,7 +686,6 @@ game_init :: proc() {
 			.Test0,
 			false,
 			false,
-			.SCREWDRIVER,
 		},
 		hammer               = Item {
 			Vec2{20., 30.},
@@ -528,8 +694,130 @@ game_init :: proc() {
 			.Test0,
 			false,
 			false,
-			.HAMMER,
 		},
+		moved_brush          = Item {
+			Vec2{30., 10.},
+			Rect{30., 10., 16., 16.},
+			"Disturbed Brush",
+			.Test0,
+			false,
+			false,
+		},
+		keys                 = Item {
+			Vec2{50., 10.},
+			Rect{50., 10., 16., 16.},
+			"Car Keys",
+			.Key,
+			false,
+			false,
+		},
+		scuffed_moss         = Item {
+			Vec2{60., 10.},
+			Rect{60., 10., 16., 16.},
+			"Disturbed Moss",
+			.Test0,
+			false,
+			false,
+		},
+		foot_prints_tracks   = Item {
+			Vec2{70., 10.},
+			Rect{70., 10., 16., 16.},
+			"Footprints",
+			.Test0,
+			false,
+			false,
+		},
+		car                  = Item {
+			Vec2{80., 10.},
+			Rect{80., 10., 16., 16.},
+			"Truck",
+			.Test0,
+			false,
+			false,
+		},
+		campfire             = Item {
+			Vec2{90., 10.},
+			Rect{90., 10., 16., 16.},
+			"Campfire",
+			.Campfire,
+			false,
+			false,
+		},
+		climbing_gear        = Item {
+			Vec2{100., 10.},
+			Rect{100., 10., 16., 16.},
+			"Climbing Gear",
+			.Backpack,
+			false,
+			false,
+		},
+		bear_mace            = Item {
+			Vec2{10., 30.},
+			Rect{10., 30., 16., 16.},
+			"Bear Mace",
+			.Bear_Mace,
+			false,
+			false,
+		},
+		sturdy_splint        = Item {
+			Vec2{30., 30.},
+			Rect{30., 30., 16., 16.},
+			"Sturdy Splint",
+			.Splint,
+			false,
+			false,
+		},
+		medical_tape         = Item {
+			Vec2{50., 30.},
+			Rect{50., 30., 16., 16.},
+			"Medical Tape",
+			.Tape,
+			false,
+			false,
+		},
+		phone                = Item {
+			Vec2{70., 30.},
+			Rect{70., 30., 16., 16.},
+			"Phone",
+			.Phone,
+			false,
+			false,
+		},
+		sturdy_tree_limbs    = Item {
+			Vec2{90., 30.},
+			Rect{90., 30., 16., 16.},
+			"Tree Limbs",
+			.Test0,
+			false,
+			false,
+		},
+		rocks                = Item {
+			Vec2{100., 30.},
+			Rect{100., 30., 16., 16.},
+			"Rocks",
+			.Rock,
+			false,
+			false,
+		},
+		paracord             = Item {
+			Vec2{120., 30.},
+			Rect{120., 30., 16., 16.},
+			"paracord",
+			.Parachord,
+			false,
+			false,
+		},
+		blanket              = Item {
+			Vec2{140., 30.},
+			Rect{140., 30., 16., 16.},
+			"blanket",
+			.Blanket,
+			false,
+			false,
+		},
+
+
+		// NPCs
 		amanda               = Npc {
 			.AMANDA,
 			Vec2{14., 100.},

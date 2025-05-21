@@ -5,8 +5,10 @@ MVP to Gameplay
 [x] Collisions 
 [x] Interactable Objects 
 [x] Interactable NPCs
-[] Dialogue
+[x] Dialogue
 [] Loading the World From Aseprite
+[] Title Screen
+[] Transitions
 
 
 ART
