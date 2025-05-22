@@ -89,6 +89,11 @@ Dialog :: struct {
 	dialog_text: [dynamic]string,
 }
 
+Objective :: struct {
+	necessary_items: [dynamic]ItemType,
+	complete:        bool,
+}
+
 DialogMapEnum :: enum {
 	AMANDA_1,
 
@@ -123,6 +128,7 @@ Game_Memory :: struct {
 	current_dialog:       Dialog,
 	current_dialog_step:  int,
 	current_dialog_frame: int,
+	current_objective:    Objective,
 
 	// Refactor into array
 	screwdriver:          Item,
@@ -445,7 +451,23 @@ update :: proc(dt: f32) {
 		if rl.IsKeyDown(.RIGHT) || rl.IsKeyDown(.D) {
 			input.x += 1
 		}
+		if rl.IsKeyDown(.I) {
+			g.game_state = .INVENTORY
+		}
 
+		if rl.IsKeyPressed(.T) {
+			check_complete := true
+			for i in 0 ..< len(g.current_objective.necessary_items) {
+				item := g.current_objective.necessary_items[i]
+				if item == ItemType.HAMMER {
+					if !g.hammer.collected {
+						check_complete = false
+						break
+					}
+				}
+			}
+			g.current_objective.complete = check_complete
+		}
 
 		// animation_update(&g.test_anim, rl.GetFrameTime())
 
@@ -454,9 +476,6 @@ update :: proc(dt: f32) {
 
 		handle_item_interactions()
 		handle_npc_interactions()
-		if rl.IsKeyDown(.I) {
-			g.game_state = .INVENTORY
-		}
 	}
 
 	// g.player_pos += input * rl.GetFrameTime() * 100
@@ -560,22 +579,21 @@ draw :: proc(dt: f32) {
 	// NOTE: `fmt.ctprintf` uses the temp allocator. The temp allocator is
 	// cleared at the end of the frame by the main application, meaning inside
 	// `main_hot_reload.odin`, `main_release.odin` or `main_web_entry.odin`.
-	if false {
-		rl.DrawText(
-			fmt.ctprintf(
-				"some_number: %v\nplayer_pos: %v\nscrewdriver collected: %v\nhammer collected: %v\nin dialogue",
-				g.some_number,
-				g.player_pos,
-				g.screwdriver.collected,
-				g.hammer.collected,
-				g.game_state == .DIALOGUE,
-			),
-			5,
-			5,
-			8,
-			rl.WHITE,
-		)
-	}
+	rl.DrawText(
+		fmt.ctprintf(
+			"some_number: %v\nplayer_pos: %v\nscrewdriver collected: %v\nhammer collected: %v\nin dialogue%v\nobj complete:%v\n",
+			g.some_number,
+			g.player_pos,
+			g.screwdriver.collected,
+			g.hammer.collected,
+			g.game_state == .DIALOGUE,
+			g.current_objective.complete,
+		),
+		5,
+		5,
+		8,
+		rl.WHITE,
+	)
 
 	if g.game_state == .DIALOGUE {
 		draw_dialog(g.current_dialog, g.current_dialog_step, g.current_dialog_frame)
@@ -694,8 +712,8 @@ draw_trees :: proc() {
 				tree := atlas_textures[.Tree_1]
 				rl.DrawTextureRec(g.atlas, tree.rect, {f32(x), f32(y)}, rl.WHITE)
 			}
-		} 
-	} 
+		}
+	}
 }
 
 place_items :: proc() {
@@ -773,6 +791,8 @@ game_init :: proc() {
 	atlas_image := rl.LoadImageFromMemory(".png", raw_data(ATLAS_DATA), i32(len(ATLAS_DATA)))
 	g = new(Game_Memory)
 
+	listOfItems := make([dynamic]ItemType, context.allocator)
+	append(&listOfItems, ItemType.HAMMER)
 	g^ = Game_Memory {
 		game_state           = .MAIN,
 		run                  = true,
@@ -785,6 +805,7 @@ game_init :: proc() {
 		current_dialog       = Dialog{1, .AMANDA, .Amanda, "amanda", load_dialog(.AMANDA_1)},
 		current_dialog_step  = 0,
 		current_dialog_frame = 0,
+		current_objective    = Objective{listOfItems, false},
 
 		// World Items
 		screwdriver          = Item {
@@ -976,6 +997,7 @@ game_should_run :: proc() -> bool {
 game_shutdown :: proc() {
 	rl.UnloadTexture(g.atlas)
 	delete(g.current_dialog.dialog_text)
+	delete(g.current_objective.necessary_items)
 	free(g)
 }
 

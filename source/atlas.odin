@@ -53,10 +53,10 @@ Texture_Name :: enum {
 	Ranger_Base,
 	Ranger_Sar,
 	Amanda,
-	Ranger_Sar_Fem,
 	Steve,
 	Claire,
 	Maggie,
+	Ranger_Sar_Fem,
 }
 
 Atlas_Texture :: struct {
@@ -98,10 +98,10 @@ atlas_textures: [Texture_Name]Atlas_Texture = {
 	.Ranger_Base = { rect = {379, 141, 16, 16}, offset_top = 0, offset_right = 0, offset_bottom = 0, offset_left = 0, document_size = {16, 16}, duration = 0.100},
 	.Ranger_Sar = { rect = {477, 159, 12, 16}, offset_top = 0, offset_right = 2, offset_bottom = 0, offset_left = 2, document_size = {16, 16}, duration = 0.100},
 	.Amanda = { rect = {490, 159, 12, 16}, offset_top = 0, offset_right = 2, offset_bottom = 0, offset_left = 2, document_size = {16, 16}, duration = 0.100},
-	.Ranger_Sar_Fem = { rect = {347, 175, 12, 16}, offset_top = 0, offset_right = 2, offset_bottom = 0, offset_left = 2, document_size = {16, 16}, duration = 0.100},
-	.Steve = { rect = {360, 175, 12, 16}, offset_top = 0, offset_right = 2, offset_bottom = 0, offset_left = 2, document_size = {16, 16}, duration = 0.100},
+	.Steve = { rect = {347, 175, 12, 16}, offset_top = 0, offset_right = 2, offset_bottom = 0, offset_left = 2, document_size = {16, 16}, duration = 0.100},
 	.Claire = { rect = {321, 176, 10, 16}, offset_top = 0, offset_right = 2, offset_bottom = 0, offset_left = 4, document_size = {16, 16}, duration = 0.100},
 	.Maggie = { rect = {429, 176, 9, 15}, offset_top = 1, offset_right = 3, offset_bottom = 0, offset_left = 4, document_size = {16, 16}, duration = 0.100},
+	.Ranger_Sar_Fem = { rect = {360, 175, 12, 16}, offset_top = 0, offset_right = 2, offset_bottom = 0, offset_left = 2, document_size = {16, 16}, duration = 0.100},
 }
 
 Animation_Name :: enum {
