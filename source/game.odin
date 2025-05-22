@@ -186,11 +186,11 @@ all_dialog: [DialogMapEnum][]string = {
 	.BLANKET_ITEM          = []string{"A good warm covering"},
 }
 
-game_camera :: proc() -> rl.Camera2D {
+game_camera :: proc(target_pos: Vec2) -> rl.Camera2D {
 	w := f32(rl.GetScreenWidth())
 	h := f32(rl.GetScreenHeight())
 
-	return {zoom = h / PIXEL_WINDOW_HEIGHT, target = g.player_pos, offset = {w / 2, h / 2}}
+	return {zoom = h / PIXEL_WINDOW_HEIGHT, target = target_pos, offset = {w / 2, h / 2}}
 }
 
 ui_camera :: proc() -> rl.Camera2D {
@@ -233,7 +233,7 @@ naive_collision :: proc(x, y: f32, moveDirection: [2]f32) -> bool {
 		   pos_y != -1 &&
 		   pos_x < GRID_SIZE &&
 		   pos_y < GRID_SIZE &&
-		   grid[pos_x][pos_y] == .Wall {
+		   (grid[pos_x][pos_y] == .TWL || grid[pos_x][pos_y] == .WLN) {
 			wall := rl.Rectangle {
 				x      = f32(pos_x) * CELL_SIZE,
 				y      = f32(pos_y) * CELL_SIZE,
@@ -495,7 +495,6 @@ draw_npc :: proc(npc: Npc) {
 			1,
 			rl.WHITE,
 		)
-
 	}
 }
 
@@ -503,7 +502,7 @@ draw :: proc(dt: f32) {
 	rl.BeginDrawing()
 	rl.ClearBackground(rl.BLUE)
 
-	rl.BeginMode2D(game_camera())
+	rl.BeginMode2D(game_camera(g.player_pos))
 	// test animation
 	// anim_texture := animation_atlas_texture(g.test_anim)
 	// test_anim_rect := anim_texture.rect
@@ -520,7 +519,8 @@ draw :: proc(dt: f32) {
 	// map_rect := atlas_textures[Texture_Name.Test_Map].rect
 	// rl.DrawTextureRec(g.atlas, map_rect, Vec2{0., 0.}, rl.WHITE)
 
-	draw_debug_tiles()
+	// draw_debug_tiles()
+	draw_tiles()
 
 	// rl.DrawTexturePro(g.atlas, test_anim_rect, dest, origin, 0, rl.WHITE)
 	player_rect := atlas_textures[Texture_Name.Ranger_Base].rect
@@ -604,6 +604,16 @@ draw_tile :: proc(x: int, y: int, pos: Vec2, flip_x: bool) {
 	rl.DrawTextureRec(g.atlas, rect, pos, rl.WHITE)
 }
 
+draw_tile_rect :: proc(rectangle: Rect, pos: Vec2, flip_x: bool) {
+	rect := rectangle
+
+	if flip_x {
+		rect.width = -rect.width
+	}
+
+	rl.DrawTextureRec(g.atlas, rect, pos, rl.WHITE)
+}
+
 // Draw Helpers
 draw_debug_tiles :: proc() {
 	for i in 0 ..< GRID_SIZE {
@@ -611,10 +621,10 @@ draw_debug_tiles :: proc() {
 			x := i32(i * CELL_SIZE)
 			y := i32(j * CELL_SIZE)
 			// Draw Debug
-			if grid[i][j] == .Wall {
+			if grid[i][j] == .WLN {
 				// rl.DrawRectangle(x, y, CELL_SIZE, CELL_SIZE, rl.RED)
 				draw_tile(6, 1, {f32(x), f32(y)}, false)
-			} else if grid[i][j] == .Floor {
+			} else if grid[i][j] == .GRS {
 				// rl.DrawRectangle(x, y, CELL_SIZE, CELL_SIZE, rl.BROWN)
 				draw_tile(5, 2, {f32(x), f32(y)}, false)
 			}
@@ -628,14 +638,9 @@ draw_tiles :: proc() {
 		for j in 0 ..< GRID_SIZE {
 			x := i32(i * CELL_SIZE)
 			y := i32(j * CELL_SIZE)
-			// Draw Debug
-			if grid[i][j] == .Wall {
-				// rl.DrawRectangle(x, y, CELL_SIZE, CELL_SIZE, rl.RED)
-				draw_tile(6, 1, {f32(x), f32(y)}, false)
-			} else if grid[i][j] == .Floor {
-				// rl.DrawRectangle(x, y, CELL_SIZE, CELL_SIZE, rl.BROWN)
-				draw_tile(5, 2, {f32(x), f32(y)}, false)
-			}
+			tile := grid[j][i]
+			tile_pos := get_tileset_pos(tile)
+			draw_tile(tile_pos.x, tile_pos.y, {f32(x), f32(y)}, false)
 			rl.DrawRectangleLines(x, y, CELL_SIZE, CELL_SIZE, rl.DARKGRAY)
 		}
 	}
