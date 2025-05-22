@@ -43,6 +43,7 @@ Vec2 :: rl.Vector2
 Game_State :: enum {
 	MAIN,
 	DIALOGUE,
+	INVENTORY,
 }
 
 ItemType :: enum {
@@ -57,12 +58,13 @@ NpcType :: enum {
 }
 
 Item :: struct {
-	pos:          Vec2,
-	rect:         Rect,
-	description:  string,
-	texture_name: Texture_Name,
-	in_range:     bool,
-	collected:    bool,
+	pos:                   Vec2,
+	rect:                  Rect,
+	description:           string,
+	texture_name:          Texture_Name,
+	in_range:              bool,
+	collected:             bool,
+	note_book_description: string,
 }
 
 Npc :: struct {
@@ -233,7 +235,7 @@ naive_collision :: proc(x, y: f32, moveDirection: [2]f32) -> bool {
 		   pos_y != -1 &&
 		   pos_x < GRID_SIZE &&
 		   pos_y < GRID_SIZE &&
-		   (grid[pos_x][pos_y] == .TWL || grid[pos_x][pos_y] == .WLN) {
+		   (grid[pos_y][pos_x] == .TWL || grid[pos_y][pos_x] == .WLN) {
 			wall := rl.Rectangle {
 				x      = f32(pos_x) * CELL_SIZE,
 				y      = f32(pos_y) * CELL_SIZE,
@@ -424,6 +426,10 @@ update :: proc(dt: f32) {
 			}
 		}
 		g.current_dialog_frame += 2
+	case .INVENTORY:
+		if rl.IsKeyPressed(.Q) {
+			g.game_state = .MAIN
+		}
 	case .MAIN:
 		input: rl.Vector2
 
@@ -448,6 +454,9 @@ update :: proc(dt: f32) {
 
 		handle_item_interactions()
 		handle_npc_interactions()
+		if rl.IsKeyDown(.I) {
+			g.game_state = .INVENTORY
+		}
 	}
 
 	// g.player_pos += input * rl.GetFrameTime() * 100
@@ -515,12 +524,9 @@ draw :: proc(dt: f32) {
 	// }
 	// origin := rl.Vector2{anim_texture.document_size.x / 2, anim_texture.document_size.y / 2}
 
-	// Static Map
-	// map_rect := atlas_textures[Texture_Name.Test_Map].rect
-	// rl.DrawTextureRec(g.atlas, map_rect, Vec2{0., 0.}, rl.WHITE)
-
 	// draw_debug_tiles()
 	draw_tiles()
+	draw_trees()
 
 	// rl.DrawTexturePro(g.atlas, test_anim_rect, dest, origin, 0, rl.WHITE)
 	player_rect := atlas_textures[Texture_Name.Ranger_Base].rect
@@ -554,23 +560,29 @@ draw :: proc(dt: f32) {
 	// NOTE: `fmt.ctprintf` uses the temp allocator. The temp allocator is
 	// cleared at the end of the frame by the main application, meaning inside
 	// `main_hot_reload.odin`, `main_release.odin` or `main_web_entry.odin`.
-	rl.DrawText(
-		fmt.ctprintf(
-			"some_number: %v\nplayer_pos: %v\nscrewdriver collected: %v\nhammer collected: %v\nin dialogue",
-			g.some_number,
-			g.player_pos,
-			g.screwdriver.collected,
-			g.hammer.collected,
-			g.game_state == .DIALOGUE,
-		),
-		5,
-		5,
-		8,
-		rl.WHITE,
-	)
+	if false {
+		rl.DrawText(
+			fmt.ctprintf(
+				"some_number: %v\nplayer_pos: %v\nscrewdriver collected: %v\nhammer collected: %v\nin dialogue",
+				g.some_number,
+				g.player_pos,
+				g.screwdriver.collected,
+				g.hammer.collected,
+				g.game_state == .DIALOGUE,
+			),
+			5,
+			5,
+			8,
+			rl.WHITE,
+		)
+	}
 
 	if g.game_state == .DIALOGUE {
 		draw_dialog(g.current_dialog, g.current_dialog_step, g.current_dialog_frame)
+	}
+
+	if g.game_state == .INVENTORY {
+		draw_inventory()
 	}
 
 	rl.EndMode2D()
@@ -591,7 +603,33 @@ draw_dialog :: proc(current_dialog: Dialog, dialog_step: int, dialog_frame: int)
 	rl.DrawTextureRec(g.atlas, texture.rect, Vec2{7., f32(dialog_pos_y + 2)}, rl.WHITE)
 	text_pos_x := texture.rect.width + 15
 	txt := fmt.ctprintf("%v: %v", current_dialog.npc_name, subtext)
-	rl.DrawText(txt, i32(text_pos_x), i32(dialog_pos_y), 8, rl.WHITE)
+	rl.DrawTextEx(g.font, txt, Vec2{text_pos_x, f32(dialog_pos_y + 2)}, 8, 1, rl.WHITE)
+}
+
+draw_inventory :: proc() {
+	window_pos := [2]i32{5, 5}
+	text_offset := window_pos + [2]i32{2, 2}
+	pixel_window_w := i32(PIXEL_WINDOW_HEIGHT * 1.5)
+	rl.DrawRectangle(
+		window_pos.x,
+		window_pos.y,
+		pixel_window_w,
+		PIXEL_WINDOW_HEIGHT - 25,
+		rl.BLACK,
+	)
+	txt := fmt.ctprint("q - close\n")
+	if g.screwdriver.collected {
+		txt = fmt.ctprintf("%v%v", txt, item_description_for_inventory(g.screwdriver))
+	}
+	if g.hammer.collected {
+		txt = fmt.ctprintf("%v%v", txt, item_description_for_inventory(g.hammer))
+	}
+	// txt = fmt.ctprintf("%v: %v\n%v: %v", "item", "does thing", "next item", "does another thing")
+	rl.DrawTextEx(g.font, txt, Vec2{f32(text_offset.x), f32(text_offset.y)}, 6, 1, rl.WHITE)
+}
+
+item_description_for_inventory :: proc(item: Item) -> cstring {
+	return fmt.ctprintf("%v: %v\n", item.description, item.note_book_description)
 }
 
 draw_tile :: proc(x: int, y: int, pos: Vec2, flip_x: bool) {
@@ -646,6 +684,71 @@ draw_tiles :: proc() {
 	}
 }
 
+draw_trees :: proc() {
+	for i in 0 ..< GRID_SIZE {
+		for j in 0 ..< GRID_SIZE {
+			x := i32(i * CELL_SIZE)
+			y := i32(j * CELL_SIZE)
+			tile := grid[j][i]
+			if tile == .TWL {
+				tree := atlas_textures[.Tree_1]
+				rl.DrawTextureRec(g.atlas, tree.rect, {f32(x), f32(y)}, rl.WHITE)
+			}
+		} 
+	} 
+}
+
+place_items :: proc() {
+	for i in 0 ..< GRID_SIZE {
+		for j in 0 ..< GRID_SIZE {
+			x := i32(i * CELL_SIZE)
+			y := i32(j * CELL_SIZE)
+			item_enum := item_grid[j][i]
+			switch item_enum {
+			case .SCR:
+				move_item(&g.screwdriver, x, y)
+			case .BRS:
+				move_item(&g.moved_brush, x, y)
+			case .HMR:
+				move_item(&g.hammer, x, y)
+			case .KEY:
+				move_item(&g.keys, x, y)
+			case .MOS:
+				move_item(&g.scuffed_moss, x, y)
+			case .FTP:
+				move_item(&g.foot_prints_tracks, x, y)
+			case .CAR:
+				move_item(&g.car, x, y)
+			case .FIR:
+				move_item(&g.campfire, x, y)
+			case .CLG:
+				move_item(&g.climbing_gear, x, y)
+			case .BRM:
+				move_item(&g.bear_mace, x, y)
+			case .MTP:
+				move_item(&g.medical_tape, x, y)
+			case .PHN:
+				move_item(&g.phone, x, y)
+			case .TRL:
+				move_item(&g.sturdy_tree_limbs, x, y)
+			case .ROK:
+				move_item(&g.rocks, x, y)
+			case .PRC:
+				move_item(&g.paracord, x, y)
+			case .BNK:
+				move_item(&g.blanket, x, y)
+			case .NON:
+			}
+		}
+	}
+}
+
+move_item :: proc(item: ^Item, x, y: i32) {
+	item.pos = Vec2{f32(x), f32(y)}
+	item.rect.x = f32(x)
+	item.rect.y = f32(y)
+}
+
 @(export)
 game_update :: proc() {
 	deltaTime := rl.GetFrameTime()
@@ -691,6 +794,7 @@ game_init :: proc() {
 			.Test0,
 			false,
 			false,
+			"screwdriver",
 		},
 		hammer               = Item {
 			Vec2{20., 30.},
@@ -699,6 +803,7 @@ game_init :: proc() {
 			.Test0,
 			false,
 			false,
+			"hammer",
 		},
 		moved_brush          = Item {
 			Vec2{30., 10.},
@@ -707,6 +812,7 @@ game_init :: proc() {
 			.Test0,
 			false,
 			false,
+			"Found Disturbed Brush",
 		},
 		keys                 = Item {
 			Vec2{50., 10.},
@@ -715,6 +821,7 @@ game_init :: proc() {
 			.Key,
 			false,
 			false,
+			"Found these keys",
 		},
 		scuffed_moss         = Item {
 			Vec2{60., 10.},
@@ -723,6 +830,7 @@ game_init :: proc() {
 			.Test0,
 			false,
 			false,
+			"Log's moss been disturbed",
 		},
 		foot_prints_tracks   = Item {
 			Vec2{70., 10.},
@@ -731,6 +839,7 @@ game_init :: proc() {
 			.Test0,
 			false,
 			false,
+			"Two sets of foot prints",
 		},
 		car                  = Item {
 			Vec2{80., 10.},
@@ -739,6 +848,7 @@ game_init :: proc() {
 			.Test0,
 			false,
 			false,
+			"The Truck has been here for days",
 		},
 		campfire             = Item {
 			Vec2{90., 10.},
@@ -747,6 +857,7 @@ game_init :: proc() {
 			.Campfire,
 			false,
 			false,
+			"A campfire has been out for days",
 		},
 		climbing_gear        = Item {
 			Vec2{100., 10.},
@@ -755,6 +866,7 @@ game_init :: proc() {
 			.Backpack,
 			false,
 			false,
+			"Climbing gear they were mountaineers",
 		},
 		bear_mace            = Item {
 			Vec2{10., 30.},
@@ -763,6 +875,7 @@ game_init :: proc() {
 			.Bear_Mace,
 			false,
 			false,
+			"Probably used to fend off an attacker",
 		},
 		sturdy_splint        = Item {
 			Vec2{30., 30.},
@@ -771,6 +884,7 @@ game_init :: proc() {
 			.Splint,
 			false,
 			false,
+			"Can use to help dad",
 		},
 		medical_tape         = Item {
 			Vec2{50., 30.},
@@ -779,6 +893,7 @@ game_init :: proc() {
 			.Tape,
 			false,
 			false,
+			"Can use to help dad",
 		},
 		phone                = Item {
 			Vec2{70., 30.},
@@ -787,6 +902,7 @@ game_init :: proc() {
 			.Phone,
 			false,
 			false,
+			"It's dead",
 		},
 		sturdy_tree_limbs    = Item {
 			Vec2{90., 30.},
@@ -795,6 +911,7 @@ game_init :: proc() {
 			.Test0,
 			false,
 			false,
+			"Can use to make lean two",
 		},
 		rocks                = Item {
 			Vec2{100., 30.},
@@ -803,6 +920,7 @@ game_init :: proc() {
 			.Rock,
 			false,
 			false,
+			"Can use to make lean two",
 		},
 		paracord             = Item {
 			Vec2{120., 30.},
@@ -811,6 +929,7 @@ game_init :: proc() {
 			.Parachord,
 			false,
 			false,
+			"Can use to make lean two",
 		},
 		blanket              = Item {
 			Vec2{140., 30.},
@@ -819,6 +938,7 @@ game_init :: proc() {
 			.Blanket,
 			false,
 			false,
+			"Can use to make lean two",
 		},
 
 
@@ -834,6 +954,7 @@ game_init :: proc() {
 			false,
 		},
 	}
+	place_items()
 	rl.UnloadImage(atlas_image)
 
 	game_hot_reloaded(g)
