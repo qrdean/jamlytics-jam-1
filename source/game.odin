@@ -49,7 +49,9 @@ Game_State :: enum {
 Game_Scene :: enum {
 	SCENE_1,
 	SCENE_2,
+	SCENE_3,
 	CUTSCENE,
+	ENDING,
 }
 
 ItemType :: enum {
@@ -193,9 +195,12 @@ DialogMapEnum :: enum {
 	SARAH_1,
 	BRIAN_1,
 	IDA_1,
+	ENDING_1,
 	OBJECTIVE_1_COMPLETE,
 	OBJECTIVE_2_COMPLETE,
 	OBJECTIVE_3_COMPLETE,
+	OBJECTIVE_4_COMPLETE,
+	OBJECTIVE_5_COMPLETE,
 
 	// Items & Clues 
 	SCREWDRIVER_ITEM,
@@ -227,7 +232,10 @@ all_dialog: [DialogMapEnum][]string = {
 		"Are you ready to wait?",
 		"Press 'f' to progress or 'x' to continue exploring",
 	},
-	.AMANDA_2              = []string{},
+	.AMANDA_2              = []string {
+		"Probably should start searching again today.",
+		"Take a look at that path.",
+	},
 	.STEVE_1               = []string {
 		"Arggh!",
 		"My legs broken...",
@@ -241,11 +249,12 @@ all_dialog: [DialogMapEnum][]string = {
 		"Love you maggie.",
 		"Hope your mom is out there",
 	},
-	.CLAIRE_1              = []string{},
-	.GEORGE_1              = []string{},
-	.SARAH_1               = []string{},
-	.BRIAN_1               = []string{},
-	.IDA_1                 = []string{},
+	.CLAIRE_1              = []string{"im claire"},
+	.GEORGE_1              = []string{"im george"},
+	.SARAH_1               = []string{"im sarah"},
+	.BRIAN_1               = []string{"im brian"},
+	.IDA_1                 = []string{"im ida"},
+	.ENDING_1              = []string{"Fin."},
 	.OBJECTIVE_1_COMPLETE  = []string {
 		"You've found enough clues for now.",
 		"Let's wait for the Search & Rescue team to arrive",
@@ -255,7 +264,10 @@ all_dialog: [DialogMapEnum][]string = {
 	.OBJECTIVE_3_COMPLETE  = []string {
 		"You've got the materials to build a lean two.",
 		"Build it?",
+		"Press 'f' to progress or 'x' to continue exploring",
 	},
+	.OBJECTIVE_4_COMPLETE  = []string{"Lean Two is built. Should go check it out."},
+	.OBJECTIVE_5_COMPLETE  = []string{"Go check out the trails"},
 
 	// Items & Clues
 	.SCREWDRIVER_ITEM      = []string{"This is a Screwdriver"},
@@ -303,12 +315,15 @@ load_dialog :: proc(npc_type: DialogMapEnum) -> [dynamic]string {
 }
 
 Tasks :: enum {
+	NONE,
 	TASK_1,
 	TASK_2,
 	TASK_3,
+	TASK_5,
 }
 
 item_collection_tasks: [Tasks][]ItemType = {
+	.NONE   = []ItemType{},
 	.TASK_1 = []ItemType{ItemType.SCREWDRIVER, ItemType.HAMMER},
 	.TASK_2 = []ItemType{ItemType.STURDY_SPLINT, ItemType.MEDICAL_TAPE},
 	.TASK_3 = []ItemType {
@@ -317,6 +332,7 @@ item_collection_tasks: [Tasks][]ItemType = {
 		ItemType.PARACORD,
 		ItemType.BLANKET,
 	},
+	.TASK_5 = []ItemType{ItemType.BEAR_MACE},
 }
 
 game_camera :: proc(target_pos: Vec2) -> rl.Camera2D {
@@ -328,7 +344,7 @@ game_camera :: proc(target_pos: Vec2) -> rl.Camera2D {
 
 cutscene_camera :: proc() -> rl.Camera2D {
 	h := f32(rl.GetScreenHeight())
-	return {zoom = h / PIXEL_WINDOW_HEIGHT}
+	return {zoom = h / (PIXEL_WINDOW_HEIGHT)}
 }
 
 ui_camera :: proc() -> rl.Camera2D {
@@ -450,14 +466,6 @@ handle_item_interactions :: proc() {
 			proc() {g.keys.collected = true;handle_dialog(.ITEM, .KEYS_CLUE)},
 		)
 		handle_item_interaction(
-			&g.scuffed_moss,
-			proc() {g.scuffed_moss.collected = true;handle_dialog(.ITEM, .SCUFFED_MOSS_CLUE)},
-		)
-		handle_item_interaction(
-			&g.foot_prints_tracks,
-			proc() {g.foot_prints_tracks.collected = true;handle_dialog(.ITEM, .FOOT_PRINTS_CLUE)},
-		)
-		handle_item_interaction(
 			&g.car,
 			proc() {g.car.collected = true;handle_dialog(.ITEM, .CAR_CLUE)},
 		)
@@ -468,10 +476,6 @@ handle_item_interactions :: proc() {
 		handle_item_interaction(
 			&g.climbing_gear,
 			proc() {g.climbing_gear.collected = true;handle_dialog(.ITEM, .CLIMBING_GEAR_CLUE)},
-		)
-		handle_item_interaction(
-			&g.bear_mace,
-			proc() {g.bear_mace.collected = true;handle_dialog(.ITEM, .BEAR_MACE_CLUE)},
 		)
 	case .SCENE_2:
 		handle_item_interaction(
@@ -501,7 +505,21 @@ handle_item_interactions :: proc() {
 			proc() {g.blanket.collected = true;handle_dialog(.ITEM, .BLANKET_ITEM)},
 		)
 		handle_item_interaction(&g.lean_two, proc() {handle_dialog(.ITEM, .LEAN_TWO_ITEM)})
+	case .SCENE_3:
+		handle_item_interaction(
+			&g.bear_mace,
+			proc() {g.bear_mace.collected = true;handle_dialog(.ITEM, .BEAR_MACE_CLUE)},
+		)
+		handle_item_interaction(
+			&g.scuffed_moss,
+			proc() {g.scuffed_moss.collected = true;handle_dialog(.ITEM, .SCUFFED_MOSS_CLUE)},
+		)
+		handle_item_interaction(
+			&g.foot_prints_tracks,
+			proc() {g.foot_prints_tracks.collected = true;handle_dialog(.ITEM, .FOOT_PRINTS_CLUE)},
+		)
 	case .CUTSCENE:
+	case .ENDING:
 	}
 }
 
@@ -557,30 +575,6 @@ handle_npc_interactions :: proc() {
 				}
 			}
 		}
-		g.george.in_range = collide_with_npc(g.george, g.player_pos)
-		if g.george.in_range {
-			if rl.IsKeyPressed(.E) {
-				handle_dialog(.GEORGE, .AMANDA_1)
-			}
-		}
-		g.sarah.in_range = collide_with_npc(g.sarah, g.player_pos)
-		if g.sarah.in_range {
-			if rl.IsKeyPressed(.E) {
-				handle_dialog(.SARAH, .AMANDA_1)
-			}
-		}
-		g.brian.in_range = collide_with_npc(g.brian, g.player_pos)
-		if g.brian.in_range {
-			if rl.IsKeyPressed(.E) {
-				handle_dialog(.BRIAN, .AMANDA_1)
-			}
-		}
-		g.ida.in_range = collide_with_npc(g.ida, g.player_pos)
-		if g.ida.in_range {
-			if rl.IsKeyPressed(.E) {
-				handle_dialog(.IDA, .AMANDA_1)
-			}
-		}
 	case .SCENE_2:
 		g.steve.in_range = collide_with_npc(g.steve, g.player_pos)
 		if g.steve.in_range {
@@ -603,10 +597,42 @@ handle_npc_interactions :: proc() {
 		g.claire.in_range = collide_with_npc(g.claire, g.player_pos)
 		if g.claire.in_range {
 			if rl.IsKeyPressed(.E) {
-				handle_dialog(.CLAIRE, .AMANDA_1)
+				handle_dialog(.CLAIRE, .CLAIRE_1)
+			}
+		}
+	case .SCENE_3:
+		g.amanda.in_range = collide_with_npc(g.amanda, g.player_pos)
+		if g.amanda.in_range {
+			if rl.IsKeyPressed(.E) {
+				handle_dialog(.AMANDA, .AMANDA_2)
+			}
+		}
+		g.george.in_range = collide_with_npc(g.george, g.player_pos)
+		if g.george.in_range {
+			if rl.IsKeyPressed(.E) {
+				handle_dialog(.GEORGE, .GEORGE_1)
+			}
+		}
+		g.sarah.in_range = collide_with_npc(g.sarah, g.player_pos)
+		if g.sarah.in_range {
+			if rl.IsKeyPressed(.E) {
+				handle_dialog(.SARAH, .SARAH_1)
+			}
+		}
+		g.brian.in_range = collide_with_npc(g.brian, g.player_pos)
+		if g.brian.in_range {
+			if rl.IsKeyPressed(.E) {
+				handle_dialog(.BRIAN, .BRIAN_1)
+			}
+		}
+		g.ida.in_range = collide_with_npc(g.ida, g.player_pos)
+		if g.ida.in_range {
+			if rl.IsKeyPressed(.E) {
+				handle_dialog(.IDA, .IDA_1)
 			}
 		}
 	case .CUTSCENE:
+	case .ENDING:
 	}
 }
 
@@ -625,50 +651,49 @@ update :: proc(dt: f32) {
 	switch g.game_state {
 	case .DIALOGUE:
 		size := len(g.current_dialog.dialog_text)
-		if g.story_flag_1 {
-			if g.current_dialog.dialog_enum == .AMANDA_END_1 {
-				if rl.IsKeyPressed(.F) {
-					fmt.println("yes")
-					g.game_scene = .SCENE_2
-					g.current_objective.complete = false
-					g.current_objective.dialog_completion = .OBJECTIVE_2_COMPLETE
-					g.objective_necessary_items = load_task(.TASK_2)
-					g.game_state = .MAIN
-				}
-				if rl.IsKeyPressed(.X) {
-					fmt.println("no")
-					g.game_state = .MAIN
-				}
+		if g.current_dialog.dialog_enum == .AMANDA_END_1 {
+			if rl.IsKeyPressed(.F) {
+				fmt.println("yes")
+				g.game_scene = .SCENE_2
+				g.current_objective.complete = false
+				g.current_objective.dialog_completion = .OBJECTIVE_2_COMPLETE
+				g.objective_necessary_items = load_task(.TASK_2)
+				g.game_state = .MAIN
+			}
+			if rl.IsKeyPressed(.X) {
+				fmt.println("no")
+				g.game_state = .MAIN
 			}
 		}
 
-		if g.story_flag_3 {
-			if g.current_dialog.dialog_enum == .OBJECTIVE_3_COMPLETE {
-				if rl.IsKeyPressed(.F) {
-					fmt.println("built lean two")
-					g.lean_two.collected = false
-					g.current_objective.complete = false
-					// g.current_dialog.dialog_completion = false
-					g.game_state = .MAIN
-				}
-				if rl.IsKeyPressed(.X) {
-					fmt.println("didnt build lean two")
-					g.game_state = .MAIN
-				}
+		if g.current_dialog.dialog_enum == .OBJECTIVE_3_COMPLETE {
+			if rl.IsKeyPressed(.F) {
+				g.lean_two.collected = false
+				g.current_objective.complete = false
+				g.current_objective.dialog_completion = .OBJECTIVE_4_COMPLETE
+				g.objective_necessary_items = load_task(.NONE)
+				g.game_state = .MAIN
+			}
+			if rl.IsKeyPressed(.X) {
+				g.game_state = .MAIN
 			}
 		}
 
 		if g.current_dialog.dialog_enum == .LEAN_TWO_ITEM {
 			if rl.IsKeyPressed(.F) {
-				fmt.println("Sleep... Trigger dialog from dad")
 				g.game_scene = .CUTSCENE
 				g.cutscene_texture_name = .Test_Map
 				handle_dialog(.STEVE, .STEVE_4)
 			}
 			if rl.IsKeyPressed(.X) {
-				fmt.println("didn't sleep")
 				g.game_state = .MAIN
 			}
+		}
+
+		if g.current_dialog.dialog_enum == .OBJECTIVE_5_COMPLETE {
+			g.game_scene = .CUTSCENE
+			g.cutscene_texture_name = .Test_Map
+			handle_dialog(.OBJECTIVE, .ENDING_1)
 		}
 
 		if rl.IsKeyPressed(.E) {
@@ -676,7 +701,14 @@ update :: proc(dt: f32) {
 			g.current_dialog_frame = 0
 			if g.current_dialog_step >= (size - 1) {
 				if g.current_dialog.dialog_enum == .STEVE_4 {
-					g.game_scene = .SCENE_1
+					g.current_objective.complete = false
+					g.current_objective.dialog_completion = .OBJECTIVE_5_COMPLETE
+					g.objective_necessary_items = load_task(.TASK_5)
+					g.game_scene = .SCENE_3
+				}
+				if g.current_dialog.dialog_enum == .ENDING_1 {
+					g.current_objective.complete = false
+					g.game_scene = .ENDING
 				}
 				g.game_state = .MAIN
 			} else {
@@ -714,6 +746,9 @@ update :: proc(dt: f32) {
 			if rl.IsKeyPressed(.L) {
 				g.game_scene = .SCENE_2
 			}
+			if rl.IsKeyPressed(.K) {
+				g.game_scene = .SCENE_3
+			}
 		}
 
 		if rl.IsKeyPressed(.T) {
@@ -723,8 +758,6 @@ update :: proc(dt: f32) {
 				#partial switch g.current_objective.dialog_completion {
 				case .OBJECTIVE_1_COMPLETE:
 					g.story_flag_1 = true
-				case .OBJECTIVE_3_COMPLETE:
-					g.story_flag_3 = true
 				}
 			}
 		}
@@ -928,16 +961,10 @@ draw :: proc(dt: f32) {
 		draw_item(g.hammer)
 		draw_item(g.moved_brush)
 		draw_item(g.keys)
-		draw_item(g.scuffed_moss)
-		draw_item(g.foot_prints_tracks)
 		draw_item(g.car)
 		draw_item(g.campfire)
 		draw_item(g.climbing_gear)
-		draw_item(g.bear_mace)
 		draw_npc(g.amanda)
-		draw_npc(g.george)
-		draw_npc(g.brian)
-		draw_npc(g.ida)
 		player_rect := atlas_textures[Texture_Name.Ranger_Base].rect
 		rl.DrawTextureRec(g.atlas, player_rect, g.player_pos, rl.WHITE)
 		rl.EndMode2D()
@@ -958,9 +985,26 @@ draw :: proc(dt: f32) {
 		player_rect := atlas_textures[Texture_Name.Ranger_Base].rect
 		rl.DrawTextureRec(g.atlas, player_rect, g.player_pos, rl.WHITE)
 		rl.EndMode2D()
+	case .SCENE_3:
+		rl.BeginMode2D(game_camera(g.player_pos))
+		draw_tiles()
+		draw_trees()
+		draw_item(g.scuffed_moss)
+		draw_item(g.foot_prints_tracks)
+		draw_item(g.bear_mace)
+		draw_npc(g.amanda)
+		draw_npc(g.george)
+		draw_npc(g.brian)
+		draw_npc(g.ida)
+		player_rect := atlas_textures[Texture_Name.Ranger_Base].rect
+		rl.DrawTextureRec(g.atlas, player_rect, g.player_pos, rl.WHITE)
+		rl.EndMode2D()
 	case .CUTSCENE:
 		rl.BeginMode2D(cutscene_camera())
 		draw_cutscene(g.cutscene_texture_name)
+		rl.EndMode2D()
+	case .ENDING:
+		rl.BeginMode2D(cutscene_camera())
 		rl.EndMode2D()
 	}
 
@@ -1218,17 +1262,17 @@ game_init :: proc() {
 	g = new(Game_Memory)
 
 	g^ = Game_Memory {
-		debug_mode           = true,
-		game_state           = .MAIN,
-		game_scene           = .SCENE_1,
-		run                  = true,
-		some_number          = 100,
+		debug_mode                = true,
+		game_state                = .MAIN,
+		game_scene                = .SCENE_1,
+		run                       = true,
+		some_number               = 100,
 
 		// You can put textures, sounds and music in the `assets` folder. Those
 		// files will be part any release or web build.
-		atlas                = rl.LoadTextureFromImage(atlas_image),
-		test_anim            = animation_create(.Test),
-		current_dialog       = Dialog {
+		atlas                     = rl.LoadTextureFromImage(atlas_image),
+		test_anim                 = animation_create(.Test),
+		current_dialog            = Dialog {
 			1,
 			.AMANDA,
 			.Amanda,
@@ -1236,16 +1280,17 @@ game_init :: proc() {
 			load_dialog(.AMANDA_1),
 			.AMANDA_1,
 		},
-		current_dialog_step  = 0,
-		current_dialog_frame = 0,
-		current_objective    = Objective{false, .OBJECTIVE_1_COMPLETE},
-		story_flag_1         = false,
-		story_flag_2         = false,
-		story_flag_3         = false,
+		current_dialog_step       = 0,
+		current_dialog_frame      = 0,
+		current_objective         = Objective{false, .OBJECTIVE_1_COMPLETE},
+		objective_necessary_items = load_task(.TASK_1),
+		story_flag_1              = false,
+		story_flag_2              = false,
+		story_flag_3              = false,
 
 
 		// World Items
-		screwdriver          = Item {
+		screwdriver               = Item {
 			Vec2{10., 10.},
 			Rect{10., 10., 16., 16.},
 			"Screwdriver",
@@ -1254,7 +1299,7 @@ game_init :: proc() {
 			false,
 			"screwdriver",
 		},
-		hammer               = Item {
+		hammer                    = Item {
 			Vec2{20., 30.},
 			Rect{20., 30., 16., 16.},
 			"hammer",
@@ -1263,7 +1308,7 @@ game_init :: proc() {
 			false,
 			"hammer",
 		},
-		moved_brush          = Item {
+		moved_brush               = Item {
 			Vec2{30., 10.},
 			Rect{30., 10., 16., 16.},
 			"Disturbed Brush",
@@ -1272,7 +1317,7 @@ game_init :: proc() {
 			false,
 			"Found Disturbed Brush",
 		},
-		keys                 = Item {
+		keys                      = Item {
 			Vec2{50., 10.},
 			Rect{50., 10., 16., 16.},
 			"Car Keys",
@@ -1281,7 +1326,7 @@ game_init :: proc() {
 			false,
 			"Found these keys",
 		},
-		scuffed_moss         = Item {
+		scuffed_moss              = Item {
 			Vec2{60., 10.},
 			Rect{60., 10., 16., 16.},
 			"Disturbed Moss",
@@ -1290,7 +1335,7 @@ game_init :: proc() {
 			false,
 			"Log's moss been disturbed",
 		},
-		foot_prints_tracks   = Item {
+		foot_prints_tracks        = Item {
 			Vec2{70., 10.},
 			Rect{70., 10., 16., 16.},
 			"Footprints",
@@ -1299,7 +1344,7 @@ game_init :: proc() {
 			false,
 			"Two sets of foot prints",
 		},
-		car                  = Item {
+		car                       = Item {
 			Vec2{80., 10.},
 			Rect{80., 10., 16., 16.},
 			"Truck",
@@ -1308,7 +1353,7 @@ game_init :: proc() {
 			false,
 			"The Truck has been here for days",
 		},
-		campfire             = Item {
+		campfire                  = Item {
 			Vec2{90., 10.},
 			Rect{90., 10., 16., 16.},
 			"Campfire",
@@ -1317,7 +1362,7 @@ game_init :: proc() {
 			false,
 			"A campfire has been out for days",
 		},
-		climbing_gear        = Item {
+		climbing_gear             = Item {
 			Vec2{100., 10.},
 			Rect{100., 10., 16., 16.},
 			"Climbing Gear",
@@ -1326,7 +1371,7 @@ game_init :: proc() {
 			false,
 			"Climbing gear they were mountaineers",
 		},
-		bear_mace            = Item {
+		bear_mace                 = Item {
 			Vec2{10., 30.},
 			Rect{10., 30., 16., 16.},
 			"Bear Mace",
@@ -1335,7 +1380,7 @@ game_init :: proc() {
 			false,
 			"Probably used to fend off an attacker",
 		},
-		sturdy_splint        = Item {
+		sturdy_splint             = Item {
 			Vec2{30., 30.},
 			Rect{30., 30., 16., 16.},
 			"Sturdy Splint",
@@ -1344,7 +1389,7 @@ game_init :: proc() {
 			false,
 			"Can use to help dad",
 		},
-		medical_tape         = Item {
+		medical_tape              = Item {
 			Vec2{50., 30.},
 			Rect{50., 30., 16., 16.},
 			"Medical Tape",
@@ -1353,7 +1398,7 @@ game_init :: proc() {
 			false,
 			"Can use to help dad",
 		},
-		phone                = Item {
+		phone                     = Item {
 			Vec2{70., 30.},
 			Rect{70., 30., 16., 16.},
 			"Phone",
@@ -1362,7 +1407,7 @@ game_init :: proc() {
 			false,
 			"It's dead",
 		},
-		sturdy_tree_limbs    = Item {
+		sturdy_tree_limbs         = Item {
 			Vec2{90., 30.},
 			Rect{90., 30., 16., 16.},
 			"Tree Limbs",
@@ -1371,7 +1416,7 @@ game_init :: proc() {
 			false,
 			"Can use to make lean two",
 		},
-		rocks                = Item {
+		rocks                     = Item {
 			Vec2{100., 30.},
 			Rect{100., 30., 16., 16.},
 			"Rocks",
@@ -1380,7 +1425,7 @@ game_init :: proc() {
 			false,
 			"Can use to make lean two",
 		},
-		paracord             = Item {
+		paracord                  = Item {
 			Vec2{120., 30.},
 			Rect{120., 30., 16., 16.},
 			"paracord",
@@ -1389,7 +1434,7 @@ game_init :: proc() {
 			false,
 			"Can use to make lean two",
 		},
-		blanket              = Item {
+		blanket                   = Item {
 			Vec2{140., 30.},
 			Rect{140., 30., 16., 16.},
 			"blanket",
@@ -1398,7 +1443,7 @@ game_init :: proc() {
 			false,
 			"Can use to make lean two",
 		},
-		lean_two             = Item {
+		lean_two                  = Item {
 			Vec2{140., 30.},
 			Rect{140., 30., 16., 16.},
 			"Lean Two",
@@ -1410,7 +1455,7 @@ game_init :: proc() {
 
 
 		// NPCs
-		amanda               = Npc {
+		amanda                    = Npc {
 			.AMANDA,
 			Vec2{14., 100.},
 			Rect{14., 100., 16., 16.},
@@ -1420,7 +1465,7 @@ game_init :: proc() {
 			false,
 			false,
 		},
-		steve                = Npc {
+		steve                     = Npc {
 			.STEVE,
 			Vec2{34., 100.},
 			Rect{34., 100., 16., 16.},
@@ -1430,7 +1475,7 @@ game_init :: proc() {
 			false,
 			false,
 		},
-		claire               = Npc {
+		claire                    = Npc {
 			.CLAIRE,
 			Vec2{54., 100.},
 			Rect{54., 100., 16., 16.},
@@ -1440,7 +1485,7 @@ game_init :: proc() {
 			false,
 			false,
 		},
-		george               = Npc {
+		george                    = Npc {
 			.GEORGE,
 			Vec2{74., 100.},
 			Rect{74., 100., 16., 16.},
@@ -1450,7 +1495,7 @@ game_init :: proc() {
 			false,
 			false,
 		},
-		sarah                = Npc {
+		sarah                     = Npc {
 			.SARAH,
 			Vec2{94., 100.},
 			Rect{94., 100., 16., 16.},
@@ -1460,7 +1505,7 @@ game_init :: proc() {
 			false,
 			false,
 		},
-		brian                = Npc {
+		brian                     = Npc {
 			.BRIAN,
 			Vec2{114., 100.},
 			Rect{114., 100., 16., 16.},
@@ -1470,7 +1515,7 @@ game_init :: proc() {
 			false,
 			false,
 		},
-		ida                  = Npc {
+		ida                       = Npc {
 			.IDA,
 			Vec2{134., 100.},
 			Rect{134., 100., 16., 16.},
