@@ -49,6 +49,7 @@ Game_State :: enum {
 Game_Scene :: enum {
 	SCENE_1,
 	SCENE_2,
+	CUTSCENE,
 }
 
 ItemType :: enum {
@@ -105,7 +106,7 @@ Npc :: struct {
 	item_given:   bool,
 }
 
-DIALOG_SIZE_HEIGHT :: 64
+DIALOG_SIZE_HEIGHT :: 32
 DIALOG_SIZE_WIDTH :: 720
 
 Dialog :: struct {
@@ -141,6 +142,7 @@ Game_Memory :: struct {
 	current_dialog_frame:      int,
 	current_objective:         Objective,
 	objective_necessary_items: [dynamic]ItemType,
+	cutscene_texture_name:     Texture_Name,
 	story_flag_1:              bool, // investigate campsite
 	story_flag_2:              bool, // fix dads leg
 	story_flag_3:              bool, // make lean two
@@ -249,7 +251,7 @@ all_dialog: [DialogMapEnum][]string = {
 		"Let's wait for the Search & Rescue team to arrive",
 		"Talk to Amanda to Progress the Story.",
 	},
-	.OBJECTIVE_2_COMPLETE  = []string{},
+	.OBJECTIVE_2_COMPLETE  = []string{"Go treat your dad's leg."},
 	.OBJECTIVE_3_COMPLETE  = []string {
 		"You've got the materials to build a lean two.",
 		"Build it?",
@@ -322,6 +324,11 @@ game_camera :: proc(target_pos: Vec2) -> rl.Camera2D {
 	h := f32(rl.GetScreenHeight())
 
 	return {zoom = h / PIXEL_WINDOW_HEIGHT, target = target_pos, offset = {w / 2, h / 2}}
+}
+
+cutscene_camera :: proc() -> rl.Camera2D {
+	h := f32(rl.GetScreenHeight())
+	return {zoom = h / PIXEL_WINDOW_HEIGHT}
 }
 
 ui_camera :: proc() -> rl.Camera2D {
@@ -494,6 +501,7 @@ handle_item_interactions :: proc() {
 			proc() {g.blanket.collected = true;handle_dialog(.ITEM, .BLANKET_ITEM)},
 		)
 		handle_item_interaction(&g.lean_two, proc() {handle_dialog(.ITEM, .LEAN_TWO_ITEM)})
+	case .CUTSCENE:
 	}
 }
 
@@ -598,6 +606,7 @@ handle_npc_interactions :: proc() {
 				handle_dialog(.CLAIRE, .AMANDA_1)
 			}
 		}
+	case .CUTSCENE:
 	}
 }
 
@@ -652,6 +661,8 @@ update :: proc(dt: f32) {
 		if g.current_dialog.dialog_enum == .LEAN_TWO_ITEM {
 			if rl.IsKeyPressed(.F) {
 				fmt.println("Sleep... Trigger dialog from dad")
+				g.game_scene = .CUTSCENE
+				g.cutscene_texture_name = .Test_Map
 				handle_dialog(.STEVE, .STEVE_4)
 			}
 			if rl.IsKeyPressed(.X) {
@@ -886,11 +897,15 @@ draw_npc :: proc(npc: Npc) {
 	}
 }
 
+draw_cutscene :: proc(cutscene_texture_name: Texture_Name) {
+	cutscene_rect := atlas_textures[cutscene_texture_name].rect
+	rl.DrawTextureRec(g.atlas, cutscene_rect, Vec2{0., 0.}, rl.WHITE)
+}
+
 draw :: proc(dt: f32) {
 	rl.BeginDrawing()
-	rl.ClearBackground(rl.BLUE)
+	rl.ClearBackground(rl.BLACK)
 
-	rl.BeginMode2D(game_camera(g.player_pos))
 	// test animation
 	// anim_texture := animation_atlas_texture(g.test_anim)
 	// test_anim_rect := anim_texture.rect
@@ -906,6 +921,7 @@ draw :: proc(dt: f32) {
 	// draw_debug_tiles()
 	switch g.game_scene {
 	case .SCENE_1:
+		rl.BeginMode2D(game_camera(g.player_pos))
 		draw_tiles()
 		draw_trees()
 		draw_item(g.screwdriver)
@@ -924,7 +940,9 @@ draw :: proc(dt: f32) {
 		draw_npc(g.ida)
 		player_rect := atlas_textures[Texture_Name.Ranger_Base].rect
 		rl.DrawTextureRec(g.atlas, player_rect, g.player_pos, rl.WHITE)
+		rl.EndMode2D()
 	case .SCENE_2:
+		rl.BeginMode2D(game_camera(g.player_pos))
 		draw_tiles_two()
 		draw_trees_two()
 		draw_item(g.sturdy_splint)
@@ -939,6 +957,11 @@ draw :: proc(dt: f32) {
 		draw_npc(g.claire)
 		player_rect := atlas_textures[Texture_Name.Ranger_Base].rect
 		rl.DrawTextureRec(g.atlas, player_rect, g.player_pos, rl.WHITE)
+		rl.EndMode2D()
+	case .CUTSCENE:
+		rl.BeginMode2D(cutscene_camera())
+		draw_cutscene(g.cutscene_texture_name)
+		rl.EndMode2D()
 	}
 
 	// rl.DrawTexturePro(g.atlas, test_anim_rect, dest, origin, 0, rl.WHITE)
@@ -946,7 +969,6 @@ draw :: proc(dt: f32) {
 
 	// rl.DrawRectangleV(g.player_pos, Vec2{10., 10.}, rl.RAYWHITE)
 
-	rl.EndMode2D()
 
 	rl.BeginMode2D(ui_camera())
 
@@ -983,6 +1005,9 @@ draw :: proc(dt: f32) {
 }
 
 draw_dialog :: proc(current_dialog: Dialog, dialog_step: int, dialog_frame: int) {
+	if len(current_dialog.dialog_text) < 1 {
+		return
+	}
 	text := current_dialog.dialog_text[dialog_step]
 	dialog_pos_y := PIXEL_WINDOW_HEIGHT - DIALOG_SIZE_HEIGHT - 2
 	rl.DrawRectangle(5, i32(dialog_pos_y), DIALOG_SIZE_WIDTH, DIALOG_SIZE_HEIGHT, rl.BLACK)
