@@ -42,6 +42,52 @@ grid := [GRID_SIZE][GRID_SIZE]TILE_ENUM {
 	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
 }
 
+grid_two := [GRID_SIZE][GRID_SIZE]TILE_ENUM {
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GBR, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+}
+
+grid_base := [GRID_SIZE][GRID_SIZE]TILE_ENUM {
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GBR, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .DBR, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .DBR, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+	{ .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS, .GRS },
+}
+
 get_tileset_pos :: proc(tile_enum: TILE_ENUM) -> [2]int {
 	switch tile_enum {
 	case .GRS:

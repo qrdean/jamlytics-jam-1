@@ -46,15 +46,42 @@ Game_State :: enum {
 	INVENTORY,
 }
 
+Game_Scene :: enum {
+	SCENE_1,
+	SCENE_2,
+}
+
 ItemType :: enum {
 	NONE,
 	SCREWDRIVER,
 	HAMMER,
+	MOVED_BRUSH,
+	KEYS,
+	SCUFFED_MOSS,
+	FOOTPRINTS,
+	CAR,
+	CAMPFIRE,
+	CLIMBING_GEAR,
+	BEAR_MACE,
+	STURDY_SPLINT,
+	MEDICAL_TAPE,
+	PHONE,
+	STURDY_TREE_LIMBS,
+	ROCKS,
+	PARACORD,
+	BLANKET,
 }
 
 NpcType :: enum {
 	ITEM,
+	OBJECTIVE,
 	AMANDA,
+	STEVE,
+	CLAIRE,
+	GEORGE,
+	SARAH,
+	BRIAN,
+	IDA,
 }
 
 Item :: struct {
@@ -87,15 +114,18 @@ Dialog :: struct {
 	npc_texture: Texture_Name,
 	npc_name:    string,
 	dialog_text: [dynamic]string,
+	dialog_enum: DialogMapEnum,
 }
 
 Objective :: struct {
-	necessary_items: [dynamic]ItemType,
-	complete:        bool,
+	complete:          bool,
+	dialog_completion: DialogMapEnum,
 }
 
 DialogMapEnum :: enum {
 	AMANDA_1,
+	AMANDA_END_1,
+	OBJECTIVE_1_COMPLETE,
 
 	// Items & Clues 
 	SCREWDRIVER_ITEM,
@@ -117,40 +147,51 @@ DialogMapEnum :: enum {
 }
 
 Game_Memory :: struct {
-	game_state:           Game_State,
-	run:                  bool,
-	player_pos:           rl.Vector2,
-	player_texture:       Texture_Name,
-	test_anim:            Animation,
-	some_number:          int,
-	atlas:                rl.Texture,
-	font:                 rl.Font,
-	current_dialog:       Dialog,
-	current_dialog_step:  int,
-	current_dialog_frame: int,
-	current_objective:    Objective,
+	game_state:                Game_State,
+	game_scene:                Game_Scene,
+	run:                       bool,
+	atlas:                     rl.Texture,
+	font:                      rl.Font,
+	some_number:               int,
+	player_pos:                rl.Vector2,
+	player_texture:            Texture_Name,
+	maggie_pos:                Vec2,
+	maggie_texture:            Texture_Name,
+	test_anim:                 Animation,
+	current_dialog:            Dialog,
+	current_dialog_step:       int,
+	current_dialog_frame:      int,
+	current_objective:         Objective,
+	objective_necessary_items: [dynamic]ItemType,
+	story_flag_1:              bool,
 
 	// Refactor into array
-	screwdriver:          Item,
-	hammer:               Item,
-	moved_brush:          Item,
-	keys:                 Item,
-	scuffed_moss:         Item,
-	foot_prints_tracks:   Item,
-	car:                  Item,
-	campfire:             Item,
-	climbing_gear:        Item,
-	bear_mace:            Item,
-	sturdy_splint:        Item,
-	medical_tape:         Item,
-	phone:                Item,
-	sturdy_tree_limbs:    Item,
-	rocks:                Item,
-	paracord:             Item,
-	blanket:              Item,
+	screwdriver:               Item,
+	hammer:                    Item,
+	moved_brush:               Item,
+	keys:                      Item,
+	scuffed_moss:              Item,
+	foot_prints_tracks:        Item,
+	car:                       Item,
+	campfire:                  Item,
+	climbing_gear:             Item,
+	bear_mace:                 Item,
+	sturdy_splint:             Item,
+	medical_tape:              Item,
+	phone:                     Item,
+	sturdy_tree_limbs:         Item,
+	rocks:                     Item,
+	paracord:                  Item,
+	blanket:                   Item,
 
 	// Refactor into array
-	amanda:               Npc,
+	amanda:                    Npc,
+	steve:                     Npc,
+	claire:                    Npc,
+	george:                    Npc,
+	sarah:                     Npc,
+	brian:                     Npc,
+	ida:                       Npc,
 }
 
 g: ^Game_Memory
@@ -160,6 +201,15 @@ all_dialog: [DialogMapEnum][]string = {
 		"Hey there my name is Amanda",
 		"Are you ready to get started?",
 		"Great job, you are doing great!",
+	},
+	.AMANDA_END_1          = []string {
+		"Are you ready to wait?",
+		"Press 'f' to progress or 'x' to continue exploring",
+	},
+	.OBJECTIVE_1_COMPLETE  = []string {
+		"You've found enough clues for now.",
+		"Let's wait for the Search & Rescue team to arrive",
+		"Talk to Amanda to Progress the Story.",
 	},
 
 	// Items & Clues
@@ -194,6 +244,16 @@ all_dialog: [DialogMapEnum][]string = {
 	.BLANKET_ITEM          = []string{"A good warm covering"},
 }
 
+load_dialog :: proc(npc_type: DialogMapEnum) -> [dynamic]string {
+	dialog_text := make([dynamic]string, context.allocator)
+	dialog_slices := all_dialog[npc_type]
+	for dialog_slice in dialog_slices {
+		append(&dialog_text, dialog_slice)
+	}
+	return dialog_text
+}
+
+
 game_camera :: proc(target_pos: Vec2) -> rl.Camera2D {
 	w := f32(rl.GetScreenWidth())
 	h := f32(rl.GetScreenHeight())
@@ -205,13 +265,24 @@ ui_camera :: proc() -> rl.Camera2D {
 	return {zoom = f32(rl.GetScreenHeight()) / PIXEL_WINDOW_HEIGHT}
 }
 
-load_dialog :: proc(npc_type: DialogMapEnum) -> [dynamic]string {
-	dialog_text := make([dynamic]string, context.allocator)
-	dialog_slices := all_dialog[npc_type]
-	for dialog_slice in dialog_slices {
-		append(&dialog_text, dialog_slice)
+Tasks :: enum {
+	TASK_1,
+	TASK_2,
+}
+
+item_collection_tasks: [Tasks][]ItemType = {
+	.TASK_1 = []ItemType{ItemType.SCREWDRIVER, ItemType.HAMMER},
+	.TASK_2 = []ItemType{ItemType.NONE},
+}
+
+load_task :: proc(task: Tasks) -> [dynamic]ItemType {
+	delete(g.objective_necessary_items)
+	task_items := make([dynamic]ItemType, context.allocator)
+	task_slices := item_collection_tasks[task]
+	for task_slice in task_slices {
+		append(&task_items, task_slice)
 	}
-	return dialog_text
+	return task_items
 }
 
 // pulled from https://github.com/ChrisPHP/odin-tilemap-collision/blob/main/collision.odin
@@ -237,11 +308,15 @@ naive_collision :: proc(x, y: f32, moveDirection: [2]f32) -> bool {
 		//get tilemap coordinates
 		pos_x := pos[0] + int((new_x + half_size) / CELL_SIZE)
 		pos_y := pos[1] + int((new_y + half_size) / CELL_SIZE)
+		cur_grid := grid
+		if g.game_scene == .SCENE_2 {
+			cur_grid = grid_two
+		}
 		if pos_x != -1 &&
 		   pos_y != -1 &&
 		   pos_x < GRID_SIZE &&
 		   pos_y < GRID_SIZE &&
-		   (grid[pos_y][pos_x] == .TWL || grid[pos_y][pos_x] == .WLN) {
+		   (cur_grid[pos_y][pos_x] == .TWL || cur_grid[pos_y][pos_x] == .WLN) {
 			wall := rl.Rectangle {
 				x      = f32(pos_x) * CELL_SIZE,
 				y      = f32(pos_y) * CELL_SIZE,
@@ -299,80 +374,84 @@ handle_item_interaction :: proc(item: ^Item, c: proc()) {
 // This is messy but it works. Could pass in a pointer or something, but it's already
 // a pointer to g so wtf is the point
 handle_item_interactions :: proc() {
-	handle_item_interaction(
-		&g.screwdriver,
-		proc() {g.screwdriver.collected = true;handle_dialog(.ITEM, .SCREWDRIVER_ITEM)},
-	)
-	handle_item_interaction(&g.hammer, proc() {g.hammer.collected = true})
-	handle_item_interaction(
-		&g.moved_brush,
-		proc() {g.moved_brush.collected = true;handle_dialog(.ITEM, .MOVED_BRUSH_CLUE)},
-	)
-	handle_item_interaction(
-		&g.keys,
-		proc() {g.keys.collected = true;handle_dialog(.ITEM, .KEYS_CLUE)},
-	)
-	handle_item_interaction(
-		&g.scuffed_moss,
-		proc() {g.scuffed_moss.collected = true;handle_dialog(.ITEM, .SCUFFED_MOSS_CLUE)},
-	)
-	handle_item_interaction(
-		&g.foot_prints_tracks,
-		proc() {g.foot_prints_tracks.collected = true;handle_dialog(.ITEM, .FOOT_PRINTS_CLUE)},
-	)
-	handle_item_interaction(
-		&g.car,
-		proc() {g.car.collected = true;handle_dialog(.ITEM, .CAR_CLUE)},
-	)
-	handle_item_interaction(
-		&g.campfire,
-		proc() {g.campfire.collected = true;handle_dialog(.ITEM, .CAMPFIRE_CLUE)},
-	)
-	handle_item_interaction(
-		&g.climbing_gear,
-		proc() {g.climbing_gear.collected = true;handle_dialog(.ITEM, .CLIMBING_GEAR_CLUE)},
-	)
-	handle_item_interaction(
-		&g.bear_mace,
-		proc() {g.bear_mace.collected = true;handle_dialog(.ITEM, .BEAR_MACE_CLUE)},
-	)
-	handle_item_interaction(
-		&g.sturdy_splint,
-		proc() {g.sturdy_splint.collected = true;handle_dialog(.ITEM, .STURDY_SPLINT_ITEM)},
-	)
-	handle_item_interaction(
-		&g.medical_tape,
-		proc() {g.medical_tape.collected = true;handle_dialog(.ITEM, .MEDICAL_TAPE_ITEM)},
-	)
-	handle_item_interaction(
-		&g.phone,
-		proc() {g.phone.collected = true;handle_dialog(.ITEM, .PHONE_ITEM)},
-	)
-	handle_item_interaction(
-		&g.sturdy_tree_limbs,
-		proc() {g.sturdy_tree_limbs.collected = true;handle_dialog(.ITEM, .STURDY_TREE_LIMB_CLUE)},
-	)
-	handle_item_interaction(
-		&g.rocks,
-		proc() {g.rocks.collected = true;handle_dialog(.ITEM, .ROCKS_CLUE)},
-	)
-	handle_item_interaction(
-		&g.paracord,
-		proc() {g.paracord.collected = true;handle_dialog(.ITEM, .PARACORD_ITEM)},
-	)
-	handle_item_interaction(
-		&g.blanket,
-		proc() {g.blanket.collected = true;handle_dialog(.ITEM, .BLANKET_ITEM)},
-	)
+	switch g.game_scene {
+	case .SCENE_1:
+		handle_item_interaction(
+			&g.screwdriver,
+			proc() {g.screwdriver.collected = true;handle_dialog(.ITEM, .SCREWDRIVER_ITEM)},
+		)
+		handle_item_interaction(&g.hammer, proc() {g.hammer.collected = true})
+		handle_item_interaction(
+			&g.moved_brush,
+			proc() {g.moved_brush.collected = true;handle_dialog(.ITEM, .MOVED_BRUSH_CLUE)},
+		)
+		handle_item_interaction(
+			&g.keys,
+			proc() {g.keys.collected = true;handle_dialog(.ITEM, .KEYS_CLUE)},
+		)
+		handle_item_interaction(
+			&g.scuffed_moss,
+			proc() {g.scuffed_moss.collected = true;handle_dialog(.ITEM, .SCUFFED_MOSS_CLUE)},
+		)
+		handle_item_interaction(
+			&g.foot_prints_tracks,
+			proc() {g.foot_prints_tracks.collected = true;handle_dialog(.ITEM, .FOOT_PRINTS_CLUE)},
+		)
+		handle_item_interaction(
+			&g.car,
+			proc() {g.car.collected = true;handle_dialog(.ITEM, .CAR_CLUE)},
+		)
+		handle_item_interaction(
+			&g.campfire,
+			proc() {g.campfire.collected = true;handle_dialog(.ITEM, .CAMPFIRE_CLUE)},
+		)
+		handle_item_interaction(
+			&g.climbing_gear,
+			proc() {g.climbing_gear.collected = true;handle_dialog(.ITEM, .CLIMBING_GEAR_CLUE)},
+		)
+		handle_item_interaction(
+			&g.bear_mace,
+			proc() {g.bear_mace.collected = true;handle_dialog(.ITEM, .BEAR_MACE_CLUE)},
+		)
+	case .SCENE_2:
+		handle_item_interaction(
+			&g.sturdy_splint,
+			proc() {g.sturdy_splint.collected = true;handle_dialog(.ITEM, .STURDY_SPLINT_ITEM)},
+		)
+		handle_item_interaction(
+			&g.medical_tape,
+			proc() {g.medical_tape.collected = true;handle_dialog(.ITEM, .MEDICAL_TAPE_ITEM)},
+		)
+		handle_item_interaction(
+			&g.phone,
+			proc() {g.phone.collected = true;handle_dialog(.ITEM, .PHONE_ITEM)},
+		)
+		handle_item_interaction(&g.sturdy_tree_limbs, proc() {g.sturdy_tree_limbs.collected = true
+			handle_dialog(.ITEM, .STURDY_TREE_LIMB_CLUE)})
+		handle_item_interaction(
+			&g.rocks,
+			proc() {g.rocks.collected = true;handle_dialog(.ITEM, .ROCKS_CLUE)},
+		)
+		handle_item_interaction(
+			&g.paracord,
+			proc() {g.paracord.collected = true;handle_dialog(.ITEM, .PARACORD_ITEM)},
+		)
+		handle_item_interaction(
+			&g.blanket,
+			proc() {g.blanket.collected = true;handle_dialog(.ITEM, .BLANKET_ITEM)},
+		)
+	}
 }
 
 handle_dialog :: proc(npc_type: NpcType, dialog_enum: DialogMapEnum) {
 	dialog: Dialog
-	switch npc_type {
+	#partial switch npc_type {
 	case .AMANDA:
-		dialog = Dialog{1, .AMANDA, .Amanda, "Amanda", load_dialog(dialog_enum)}
+		dialog = Dialog{1, .AMANDA, .Amanda, "Amanda", load_dialog(dialog_enum), dialog_enum}
 	case .ITEM:
-		dialog = Dialog{2, .ITEM, .None, "Item", load_dialog(dialog_enum)}
+		dialog = Dialog{2, .ITEM, .None, "Item", load_dialog(dialog_enum), dialog_enum}
+	case .OBJECTIVE:
+		dialog = Dialog{3, .OBJECTIVE, .None, "", load_dialog(dialog_enum), dialog_enum}
 	}
 	delete(g.current_dialog.dialog_text)
 	g.current_dialog = dialog
@@ -392,13 +471,134 @@ collide_with_item :: proc(item: Item, player_pos: Vec2) -> bool {
 }
 
 handle_npc_interactions :: proc() {
-	g.amanda.in_range = collide_with_npc(g.amanda, g.player_pos)
-	if g.amanda.in_range {
-		if rl.IsKeyPressed(.E) {
-			delete(g.current_dialog.dialog_text)
-			g.current_dialog = Dialog{1, .AMANDA, .Amanda, "amanda", load_dialog(.AMANDA_1)}
-			g.current_dialog_step = 0
-			g.game_state = .DIALOGUE
+	switch g.game_scene {
+	case .SCENE_1:
+		g.amanda.in_range = collide_with_npc(g.amanda, g.player_pos)
+		if g.amanda.in_range {
+			if rl.IsKeyPressed(.E) {
+				if g.story_flag_1 {
+					delete(g.current_dialog.dialog_text)
+					g.current_dialog = Dialog {
+						1,
+						.AMANDA,
+						.Amanda,
+						"amanda",
+						load_dialog(.AMANDA_END_1),
+						.AMANDA_END_1,
+					}
+					g.current_dialog_step = 0
+					g.game_state = .DIALOGUE
+				} else {
+					delete(g.current_dialog.dialog_text)
+					g.current_dialog = Dialog {
+						1,
+						.AMANDA,
+						.Amanda,
+						"amanda",
+						load_dialog(.AMANDA_1),
+						.AMANDA_1,
+					}
+					g.current_dialog_step = 0
+					g.game_state = .DIALOGUE
+				}
+			}
+		}
+		g.george.in_range = collide_with_npc(g.george, g.player_pos)
+		if g.george.in_range {
+			if rl.IsKeyPressed(.E) {
+				delete(g.current_dialog.dialog_text)
+				g.current_dialog = Dialog {
+					1,
+					.GEORGE,
+					.Ranger_Sar,
+					"george",
+					load_dialog(.AMANDA_1),
+					.AMANDA_1,
+				}
+				g.current_dialog_step = 0
+				g.game_state = .DIALOGUE
+			}
+		}
+		g.sarah.in_range = collide_with_npc(g.sarah, g.player_pos)
+		if g.sarah.in_range {
+			if rl.IsKeyPressed(.E) {
+				delete(g.current_dialog.dialog_text)
+				g.current_dialog = Dialog {
+					1,
+					.SARAH,
+					.Ranger_Sar_Fem,
+					"sarah",
+					load_dialog(.AMANDA_1),
+					.AMANDA_1,
+				}
+				g.current_dialog_step = 0
+				g.game_state = .DIALOGUE
+			}
+		}
+		g.brian.in_range = collide_with_npc(g.brian, g.player_pos)
+		if g.brian.in_range {
+			if rl.IsKeyPressed(.E) {
+				delete(g.current_dialog.dialog_text)
+				g.current_dialog = Dialog {
+					1,
+					.BRIAN,
+					.Ranger_Sar,
+					"brian",
+					load_dialog(.AMANDA_1),
+					.AMANDA_1,
+				}
+				g.current_dialog_step = 0
+				g.game_state = .DIALOGUE
+			}
+		}
+		g.ida.in_range = collide_with_npc(g.ida, g.player_pos)
+		if g.ida.in_range {
+			if rl.IsKeyPressed(.E) {
+				delete(g.current_dialog.dialog_text)
+				g.current_dialog = Dialog {
+					1,
+					.IDA,
+					.Ranger_Sar,
+					"ida",
+					load_dialog(.AMANDA_1),
+					.AMANDA_1,
+				}
+				g.current_dialog_step = 0
+				g.game_state = .DIALOGUE
+			}
+		}
+	case .SCENE_2:
+		g.steve.in_range = collide_with_npc(g.steve, g.player_pos)
+		if g.steve.in_range {
+			if rl.IsKeyPressed(.E) {
+				delete(g.current_dialog.dialog_text)
+				g.current_dialog = Dialog {
+					1,
+					.STEVE,
+					.Steve,
+					"steve",
+					load_dialog(.AMANDA_1),
+					.AMANDA_1,
+				}
+				g.current_dialog_step = 0
+				g.game_state = .DIALOGUE
+			}
+		}
+		g.claire.in_range = collide_with_npc(g.claire, g.player_pos)
+		if g.claire.in_range {
+			if rl.IsKeyPressed(.E) {
+				delete(g.current_dialog.dialog_text)
+				g.current_dialog = Dialog {
+					1,
+					.CLAIRE,
+					.Claire,
+					"claire",
+					load_dialog(.AMANDA_1),
+					.AMANDA_1,
+				}
+				g.current_dialog_step = 0
+				g.game_state = .DIALOGUE
+			}
 		}
 	}
 }
@@ -418,10 +618,26 @@ update :: proc(dt: f32) {
 	switch g.game_state {
 	case .DIALOGUE:
 		size := len(g.current_dialog.dialog_text)
-		if rl.IsKeyPressed(.Q) {
-			// quit dialogue early
-			g.game_state = .MAIN
+		// if rl.IsKeyPressed(.Q) {
+		// 	// quit dialogue early
+		// 	g.game_state = .MAIN
+		// }
+
+		if g.story_flag_1 {
+			if g.current_dialog.dialog_enum == .AMANDA_END_1 {
+				if rl.IsKeyPressed(.F) {
+					fmt.println("yes")
+					g.story_flag_1 = false
+					g.game_scene = .SCENE_2
+					g.game_state = .MAIN
+				}
+				if rl.IsKeyPressed(.X) {
+					fmt.println("no")
+					g.game_state = .MAIN
+				}
+			}
 		}
+
 		if rl.IsKeyPressed(.E) {
 			// continue dialogue
 			g.current_dialog_frame = 0
@@ -455,18 +671,22 @@ update :: proc(dt: f32) {
 			g.game_state = .INVENTORY
 		}
 
+		if rl.IsKeyPressed(.O) {
+			g.game_scene = .SCENE_1
+		}
+		if rl.IsKeyPressed(.L) {
+			g.game_scene = .SCENE_2
+		}
+
 		if rl.IsKeyPressed(.T) {
-			check_complete := true
-			for i in 0 ..< len(g.current_objective.necessary_items) {
-				item := g.current_objective.necessary_items[i]
-				if item == ItemType.HAMMER {
-					if !g.hammer.collected {
-						check_complete = false
-						break
-					}
+			g.current_objective.complete = check_items()
+			if g.current_objective.complete {
+				handle_dialog(.OBJECTIVE, g.current_objective.dialog_completion)
+				#partial switch g.current_objective.dialog_completion {
+				case .OBJECTIVE_1_COMPLETE:
+					g.story_flag_1 = true
 				}
 			}
-			g.current_objective.complete = check_complete
 		}
 
 		// animation_update(&g.test_anim, rl.GetFrameTime())
@@ -484,6 +704,117 @@ update :: proc(dt: f32) {
 	if rl.IsKeyPressed(.ESCAPE) {
 		g.run = false
 	}
+}
+
+// FIXME: This is shit 
+check_items :: proc() -> bool {
+	check_complete := true
+	for i in 0 ..< len(g.objective_necessary_items) {
+		item := g.objective_necessary_items[i]
+		if item == ItemType.HAMMER {
+			if !g.hammer.collected {
+				check_complete = false
+				break
+			}
+		}
+		if item == ItemType.MOVED_BRUSH {
+			if !g.moved_brush.collected {
+				check_complete = false
+				break
+			}
+		}
+		if item == ItemType.KEYS {
+			if !g.keys.collected {
+				check_complete = false
+				break
+			}
+		}
+		if item == ItemType.SCUFFED_MOSS {
+			if !g.scuffed_moss.collected {
+				check_complete = false
+				break
+			}
+		}
+		if item == ItemType.FOOTPRINTS {
+			if !g.foot_prints_tracks.collected {
+				check_complete = false
+				break
+			}
+		}
+		if item == ItemType.CAR {
+			if !g.car.collected {
+				check_complete = false
+				break
+			}
+		}
+		if item == ItemType.CAMPFIRE {
+			if !g.campfire.collected {
+				check_complete = false
+				break
+			}
+		}
+		if item == ItemType.CLIMBING_GEAR {
+			if !g.climbing_gear.collected {
+				check_complete = false
+				break
+			}
+		}
+		if item == ItemType.BEAR_MACE {
+			if !g.bear_mace.collected {
+				check_complete = false
+				break
+			}
+		}
+		if item == ItemType.BEAR_MACE {
+			if !g.bear_mace.collected {
+				check_complete = false
+				break
+			}
+		}
+		if item == ItemType.STURDY_SPLINT {
+			if !g.sturdy_splint.collected {
+				check_complete = false
+				break
+			}
+		}
+		if item == ItemType.MEDICAL_TAPE {
+			if !g.medical_tape.collected {
+				check_complete = false
+				break
+			}
+		}
+		if item == ItemType.PHONE {
+			if !g.phone.collected {
+				check_complete = false
+				break
+			}
+		}
+		if item == ItemType.STURDY_TREE_LIMBS {
+			if !g.sturdy_tree_limbs.collected {
+				check_complete = false
+				break
+			}
+		}
+		if item == ItemType.ROCKS {
+			if !g.rocks.collected {
+				check_complete = false
+				break
+			}
+		}
+		if item == ItemType.PARACORD {
+			if !g.paracord.collected {
+				check_complete = false
+				break
+			}
+		}
+		if item == ItemType.BLANKET {
+			if !g.blanket.collected {
+				check_complete = false
+				break
+			}
+		}
+	}
+	return check_complete
 }
 
 // Draw Data
@@ -544,34 +875,47 @@ draw :: proc(dt: f32) {
 	// origin := rl.Vector2{anim_texture.document_size.x / 2, anim_texture.document_size.y / 2}
 
 	// draw_debug_tiles()
-	draw_tiles()
-	draw_trees()
+	switch g.game_scene {
+	case .SCENE_1:
+		draw_tiles()
+		draw_trees()
+		draw_item(g.screwdriver)
+		draw_item(g.hammer)
+		draw_item(g.moved_brush)
+		draw_item(g.keys)
+		draw_item(g.scuffed_moss)
+		draw_item(g.foot_prints_tracks)
+		draw_item(g.car)
+		draw_item(g.campfire)
+		draw_item(g.climbing_gear)
+		draw_item(g.bear_mace)
+		player_rect := atlas_textures[Texture_Name.Ranger_Base].rect
+		rl.DrawTextureRec(g.atlas, player_rect, g.player_pos, rl.WHITE)
+		draw_npc(g.amanda)
+		draw_npc(g.george)
+		draw_npc(g.brian)
+		draw_npc(g.ida)
+	case .SCENE_2:
+		draw_tiles_two()
+		draw_trees_two()
+		draw_item(g.sturdy_splint)
+		draw_item(g.medical_tape)
+		draw_item(g.phone)
+		draw_item(g.sturdy_tree_limbs)
+		draw_item(g.rocks)
+		draw_item(g.paracord)
+		draw_item(g.blanket)
+		player_rect := atlas_textures[Texture_Name.Ranger_Base].rect
+		rl.DrawTextureRec(g.atlas, player_rect, g.player_pos, rl.WHITE)
+		draw_npc(g.steve)
+		draw_npc(g.claire)
+	}
 
 	// rl.DrawTexturePro(g.atlas, test_anim_rect, dest, origin, 0, rl.WHITE)
-	player_rect := atlas_textures[Texture_Name.Ranger_Base].rect
-	rl.DrawTextureRec(g.atlas, player_rect, g.player_pos, rl.WHITE)
 	// rl.DrawTextureEx(g.player_texture, g.player_pos, 0, 1, rl.WHITE)
 
 	// rl.DrawRectangleV(g.player_pos, Vec2{10., 10.}, rl.RAYWHITE)
-	draw_item(g.screwdriver)
-	draw_item(g.hammer)
-	draw_item(g.moved_brush)
-	draw_item(g.keys)
-	draw_item(g.scuffed_moss)
-	draw_item(g.foot_prints_tracks)
-	draw_item(g.car)
-	draw_item(g.campfire)
-	draw_item(g.climbing_gear)
-	draw_item(g.bear_mace)
-	draw_item(g.sturdy_splint)
-	draw_item(g.medical_tape)
-	draw_item(g.phone)
-	draw_item(g.sturdy_tree_limbs)
-	draw_item(g.rocks)
-	draw_item(g.paracord)
-	draw_item(g.blanket)
 
-	draw_npc(g.amanda)
 	rl.EndMode2D()
 
 	rl.BeginMode2D(ui_camera())
@@ -702,12 +1046,39 @@ draw_tiles :: proc() {
 	}
 }
 
+draw_tiles_two :: proc() {
+	for i in 0 ..< GRID_SIZE {
+		for j in 0 ..< GRID_SIZE {
+			x := i32(i * CELL_SIZE)
+			y := i32(j * CELL_SIZE)
+			tile := grid_two[j][i]
+			tile_pos := get_tileset_pos(tile)
+			draw_tile(tile_pos.x, tile_pos.y, {f32(x), f32(y)}, false)
+			rl.DrawRectangleLines(x, y, CELL_SIZE, CELL_SIZE, rl.DARKGRAY)
+		}
+	}
+}
+
 draw_trees :: proc() {
 	for i in 0 ..< GRID_SIZE {
 		for j in 0 ..< GRID_SIZE {
 			x := i32(i * CELL_SIZE)
 			y := i32(j * CELL_SIZE)
 			tile := grid[j][i]
+			if tile == .TWL {
+				tree := atlas_textures[.Tree_1]
+				rl.DrawTextureRec(g.atlas, tree.rect, {f32(x), f32(y)}, rl.WHITE)
+			}
+		}
+	}
+}
+
+draw_trees_two :: proc() {
+	for i in 0 ..< GRID_SIZE {
+		for j in 0 ..< GRID_SIZE {
+			x := i32(i * CELL_SIZE)
+			y := i32(j * CELL_SIZE)
+			tile := grid_two[j][i]
 			if tile == .TWL {
 				tree := atlas_textures[.Tree_1]
 				rl.DrawTextureRec(g.atlas, tree.rect, {f32(x), f32(y)}, rl.WHITE)
@@ -791,10 +1162,9 @@ game_init :: proc() {
 	atlas_image := rl.LoadImageFromMemory(".png", raw_data(ATLAS_DATA), i32(len(ATLAS_DATA)))
 	g = new(Game_Memory)
 
-	listOfItems := make([dynamic]ItemType, context.allocator)
-	append(&listOfItems, ItemType.HAMMER)
 	g^ = Game_Memory {
 		game_state           = .MAIN,
+		game_scene           = .SCENE_1,
 		run                  = true,
 		some_number          = 100,
 
@@ -802,10 +1172,17 @@ game_init :: proc() {
 		// files will be part any release or web build.
 		atlas                = rl.LoadTextureFromImage(atlas_image),
 		test_anim            = animation_create(.Test),
-		current_dialog       = Dialog{1, .AMANDA, .Amanda, "amanda", load_dialog(.AMANDA_1)},
+		current_dialog       = Dialog {
+			1,
+			.AMANDA,
+			.Amanda,
+			"amanda",
+			load_dialog(.AMANDA_1),
+			.AMANDA_1,
+		},
 		current_dialog_step  = 0,
 		current_dialog_frame = 0,
-		current_objective    = Objective{listOfItems, false},
+		current_objective    = Objective{false, .OBJECTIVE_1_COMPLETE},
 
 		// World Items
 		screwdriver          = Item {
@@ -974,6 +1351,66 @@ game_init :: proc() {
 			false,
 			false,
 		},
+		steve                = Npc {
+			.STEVE,
+			Vec2{34., 100.},
+			Rect{34., 100., 16., 16.},
+			"steve",
+			.Steve,
+			.NONE,
+			false,
+			false,
+		},
+		claire               = Npc {
+			.CLAIRE,
+			Vec2{54., 100.},
+			Rect{54., 100., 16., 16.},
+			"claire",
+			.Claire,
+			.NONE,
+			false,
+			false,
+		},
+		george               = Npc {
+			.GEORGE,
+			Vec2{74., 100.},
+			Rect{74., 100., 16., 16.},
+			"george",
+			.Ranger_Sar,
+			.NONE,
+			false,
+			false,
+		},
+		sarah                = Npc {
+			.SARAH,
+			Vec2{94., 100.},
+			Rect{94., 100., 16., 16.},
+			"sarah",
+			.Ranger_Sar_Fem,
+			.NONE,
+			false,
+			false,
+		},
+		brian                = Npc {
+			.BRIAN,
+			Vec2{114., 100.},
+			Rect{114., 100., 16., 16.},
+			"brian",
+			.Ranger_Sar,
+			.NONE,
+			false,
+			false,
+		},
+		ida                  = Npc {
+			.IDA,
+			Vec2{134., 100.},
+			Rect{134., 100., 16., 16.},
+			"ida",
+			.Ranger_Sar_Fem,
+			.NONE,
+			false,
+			false,
+		},
 	}
 	place_items()
 	rl.UnloadImage(atlas_image)
@@ -997,7 +1434,7 @@ game_should_run :: proc() -> bool {
 game_shutdown :: proc() {
 	rl.UnloadTexture(g.atlas)
 	delete(g.current_dialog.dialog_text)
-	delete(g.current_objective.necessary_items)
+	delete(g.objective_necessary_items)
 	free(g)
 }
 
