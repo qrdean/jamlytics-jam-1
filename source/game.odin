@@ -122,31 +122,9 @@ Objective :: struct {
 	dialog_completion: DialogMapEnum,
 }
 
-DialogMapEnum :: enum {
-	AMANDA_1,
-	AMANDA_END_1,
-	OBJECTIVE_1_COMPLETE,
-
-	// Items & Clues 
-	SCREWDRIVER_ITEM,
-	MOVED_BRUSH_CLUE,
-	KEYS_CLUE,
-	SCUFFED_MOSS_CLUE,
-	FOOT_PRINTS_CLUE,
-	CAR_CLUE,
-	CAMPFIRE_CLUE,
-	CLIMBING_GEAR_CLUE,
-	BEAR_MACE_CLUE,
-	STURDY_SPLINT_ITEM,
-	MEDICAL_TAPE_ITEM,
-	PHONE_ITEM,
-	STURDY_TREE_LIMB_CLUE,
-	ROCKS_CLUE,
-	PARACORD_ITEM,
-	BLANKET_ITEM,
-}
 
 Game_Memory :: struct {
+	debug_mode:                bool,
 	game_state:                Game_State,
 	game_scene:                Game_Scene,
 	run:                       bool,
@@ -163,7 +141,9 @@ Game_Memory :: struct {
 	current_dialog_frame:      int,
 	current_objective:         Objective,
 	objective_necessary_items: [dynamic]ItemType,
-	story_flag_1:              bool,
+	story_flag_1:              bool, // investigate campsite
+	story_flag_2:              bool, // fix dads leg
+	story_flag_3:              bool, // make lean two
 
 	// Refactor into array
 	screwdriver:               Item,
@@ -183,6 +163,7 @@ Game_Memory :: struct {
 	rocks:                     Item,
 	paracord:                  Item,
 	blanket:                   Item,
+	lean_two:                  Item,
 
 	// Refactor into array
 	amanda:                    Npc,
@@ -194,7 +175,45 @@ Game_Memory :: struct {
 	ida:                       Npc,
 }
 
+
 g: ^Game_Memory
+
+DialogMapEnum :: enum {
+	AMANDA_1,
+	AMANDA_END_1,
+	AMANDA_2,
+	STEVE_1,
+	STEVE_2,
+	STEVE_3,
+	STEVE_4,
+	CLAIRE_1,
+	GEORGE_1,
+	SARAH_1,
+	BRIAN_1,
+	IDA_1,
+	OBJECTIVE_1_COMPLETE,
+	OBJECTIVE_2_COMPLETE,
+	OBJECTIVE_3_COMPLETE,
+
+	// Items & Clues 
+	SCREWDRIVER_ITEM,
+	MOVED_BRUSH_CLUE,
+	KEYS_CLUE,
+	SCUFFED_MOSS_CLUE,
+	FOOT_PRINTS_CLUE,
+	CAR_CLUE,
+	CAMPFIRE_CLUE,
+	CLIMBING_GEAR_CLUE,
+	BEAR_MACE_CLUE,
+	STURDY_SPLINT_ITEM,
+	MEDICAL_TAPE_ITEM,
+	PHONE_ITEM,
+	STURDY_TREE_LIMB_CLUE,
+	ROCKS_CLUE,
+	PARACORD_ITEM,
+	BLANKET_ITEM,
+	LEAN_TWO_ITEM,
+}
 
 all_dialog: [DialogMapEnum][]string = {
 	.AMANDA_1              = []string {
@@ -206,10 +225,34 @@ all_dialog: [DialogMapEnum][]string = {
 		"Are you ready to wait?",
 		"Press 'f' to progress or 'x' to continue exploring",
 	},
+	.AMANDA_2              = []string{},
+	.STEVE_1               = []string {
+		"Arggh!",
+		"My legs broken...",
+		"There is medical tape in the backpack.",
+		"Find a sturdy branch to splint it.",
+	},
+	.STEVE_2               = []string{"Thank you...", "Just need to rest now."},
+	.STEVE_3               = []string{"See if you can get some shelter built"},
+	.STEVE_4               = []string {
+		"You did a really good job",
+		"Love you maggie.",
+		"Hope your mom is out there",
+	},
+	.CLAIRE_1              = []string{},
+	.GEORGE_1              = []string{},
+	.SARAH_1               = []string{},
+	.BRIAN_1               = []string{},
+	.IDA_1                 = []string{},
 	.OBJECTIVE_1_COMPLETE  = []string {
 		"You've found enough clues for now.",
 		"Let's wait for the Search & Rescue team to arrive",
 		"Talk to Amanda to Progress the Story.",
+	},
+	.OBJECTIVE_2_COMPLETE  = []string{},
+	.OBJECTIVE_3_COMPLETE  = []string {
+		"You've got the materials to build a lean two.",
+		"Build it?",
 	},
 
 	// Items & Clues
@@ -242,6 +285,10 @@ all_dialog: [DialogMapEnum][]string = {
 		"Could use this cord to tie the blanket to the trees.",
 	},
 	.BLANKET_ITEM          = []string{"A good warm covering"},
+	.LEAN_TWO_ITEM         = []string {
+		"Sleep?",
+		"Press 'f' to progress or 'x' to continue exploring",
+	},
 }
 
 load_dialog :: proc(npc_type: DialogMapEnum) -> [dynamic]string {
@@ -253,6 +300,22 @@ load_dialog :: proc(npc_type: DialogMapEnum) -> [dynamic]string {
 	return dialog_text
 }
 
+Tasks :: enum {
+	TASK_1,
+	TASK_2,
+	TASK_3,
+}
+
+item_collection_tasks: [Tasks][]ItemType = {
+	.TASK_1 = []ItemType{ItemType.SCREWDRIVER, ItemType.HAMMER},
+	.TASK_2 = []ItemType{ItemType.STURDY_SPLINT, ItemType.MEDICAL_TAPE},
+	.TASK_3 = []ItemType {
+		ItemType.STURDY_TREE_LIMBS,
+		ItemType.ROCKS,
+		ItemType.PARACORD,
+		ItemType.BLANKET,
+	},
+}
 
 game_camera :: proc(target_pos: Vec2) -> rl.Camera2D {
 	w := f32(rl.GetScreenWidth())
@@ -263,16 +326,6 @@ game_camera :: proc(target_pos: Vec2) -> rl.Camera2D {
 
 ui_camera :: proc() -> rl.Camera2D {
 	return {zoom = f32(rl.GetScreenHeight()) / PIXEL_WINDOW_HEIGHT}
-}
-
-Tasks :: enum {
-	TASK_1,
-	TASK_2,
-}
-
-item_collection_tasks: [Tasks][]ItemType = {
-	.TASK_1 = []ItemType{ItemType.SCREWDRIVER, ItemType.HAMMER},
-	.TASK_2 = []ItemType{ItemType.NONE},
 }
 
 load_task :: proc(task: Tasks) -> [dynamic]ItemType {
@@ -440,14 +493,27 @@ handle_item_interactions :: proc() {
 			&g.blanket,
 			proc() {g.blanket.collected = true;handle_dialog(.ITEM, .BLANKET_ITEM)},
 		)
+		handle_item_interaction(&g.lean_two, proc() {handle_dialog(.ITEM, .LEAN_TWO_ITEM)})
 	}
 }
 
 handle_dialog :: proc(npc_type: NpcType, dialog_enum: DialogMapEnum) {
 	dialog: Dialog
-	#partial switch npc_type {
+	switch npc_type {
 	case .AMANDA:
 		dialog = Dialog{1, .AMANDA, .Amanda, "Amanda", load_dialog(dialog_enum), dialog_enum}
+	case .CLAIRE:
+		dialog = Dialog{4, .CLAIRE, .Claire, "Claire", load_dialog(dialog_enum), dialog_enum}
+	case .STEVE:
+		dialog = Dialog{5, .STEVE, .Steve, "Steve", load_dialog(dialog_enum), dialog_enum}
+	case .BRIAN:
+		dialog = Dialog{6, .BRIAN, .Ranger_Sar, "Brian", load_dialog(dialog_enum), dialog_enum}
+	case .GEORGE:
+		dialog = Dialog{7, .GEORGE, .Ranger_Sar, "George", load_dialog(dialog_enum), dialog_enum}
+	case .IDA:
+		dialog = Dialog{8, .IDA, .Ranger_Sar_Fem, "Ida", load_dialog(dialog_enum), dialog_enum}
+	case .SARAH:
+		dialog = Dialog{9, .SARAH, .Ranger_Sar_Fem, "Sarah", load_dialog(dialog_enum), dialog_enum}
 	case .ITEM:
 		dialog = Dialog{2, .ITEM, .None, "Item", load_dialog(dialog_enum), dialog_enum}
 	case .OBJECTIVE:
@@ -477,127 +543,59 @@ handle_npc_interactions :: proc() {
 		if g.amanda.in_range {
 			if rl.IsKeyPressed(.E) {
 				if g.story_flag_1 {
-					delete(g.current_dialog.dialog_text)
-					g.current_dialog = Dialog {
-						1,
-						.AMANDA,
-						.Amanda,
-						"amanda",
-						load_dialog(.AMANDA_END_1),
-						.AMANDA_END_1,
-					}
-					g.current_dialog_step = 0
-					g.game_state = .DIALOGUE
+					handle_dialog(.AMANDA, .AMANDA_END_1)
 				} else {
-					delete(g.current_dialog.dialog_text)
-					g.current_dialog = Dialog {
-						1,
-						.AMANDA,
-						.Amanda,
-						"amanda",
-						load_dialog(.AMANDA_1),
-						.AMANDA_1,
-					}
-					g.current_dialog_step = 0
-					g.game_state = .DIALOGUE
+					handle_dialog(.AMANDA, .AMANDA_1)
 				}
 			}
 		}
 		g.george.in_range = collide_with_npc(g.george, g.player_pos)
 		if g.george.in_range {
 			if rl.IsKeyPressed(.E) {
-				delete(g.current_dialog.dialog_text)
-				g.current_dialog = Dialog {
-					1,
-					.GEORGE,
-					.Ranger_Sar,
-					"george",
-					load_dialog(.AMANDA_1),
-					.AMANDA_1,
-				}
-				g.current_dialog_step = 0
-				g.game_state = .DIALOGUE
+				handle_dialog(.GEORGE, .AMANDA_1)
 			}
 		}
 		g.sarah.in_range = collide_with_npc(g.sarah, g.player_pos)
 		if g.sarah.in_range {
 			if rl.IsKeyPressed(.E) {
-				delete(g.current_dialog.dialog_text)
-				g.current_dialog = Dialog {
-					1,
-					.SARAH,
-					.Ranger_Sar_Fem,
-					"sarah",
-					load_dialog(.AMANDA_1),
-					.AMANDA_1,
-				}
-				g.current_dialog_step = 0
-				g.game_state = .DIALOGUE
+				handle_dialog(.SARAH, .AMANDA_1)
 			}
 		}
 		g.brian.in_range = collide_with_npc(g.brian, g.player_pos)
 		if g.brian.in_range {
 			if rl.IsKeyPressed(.E) {
-				delete(g.current_dialog.dialog_text)
-				g.current_dialog = Dialog {
-					1,
-					.BRIAN,
-					.Ranger_Sar,
-					"brian",
-					load_dialog(.AMANDA_1),
-					.AMANDA_1,
-				}
-				g.current_dialog_step = 0
-				g.game_state = .DIALOGUE
+				handle_dialog(.BRIAN, .AMANDA_1)
 			}
 		}
 		g.ida.in_range = collide_with_npc(g.ida, g.player_pos)
 		if g.ida.in_range {
 			if rl.IsKeyPressed(.E) {
-				delete(g.current_dialog.dialog_text)
-				g.current_dialog = Dialog {
-					1,
-					.IDA,
-					.Ranger_Sar,
-					"ida",
-					load_dialog(.AMANDA_1),
-					.AMANDA_1,
-				}
-				g.current_dialog_step = 0
-				g.game_state = .DIALOGUE
+				handle_dialog(.IDA, .AMANDA_1)
 			}
 		}
 	case .SCENE_2:
 		g.steve.in_range = collide_with_npc(g.steve, g.player_pos)
 		if g.steve.in_range {
 			if rl.IsKeyPressed(.E) {
-				delete(g.current_dialog.dialog_text)
-				g.current_dialog = Dialog {
-					1,
-					.STEVE,
-					.Steve,
-					"steve",
-					load_dialog(.AMANDA_1),
-					.AMANDA_1,
+				if g.story_flag_2 {
+					handle_dialog(.STEVE, .STEVE_3)
+				} else {
+					if check_items() {
+						handle_dialog(.STEVE, .STEVE_2)
+						g.story_flag_2 = true
+						g.objective_necessary_items = load_task(.TASK_3)
+						g.current_objective.complete = false
+						g.current_objective.dialog_completion = .OBJECTIVE_3_COMPLETE
+					} else {
+						handle_dialog(.STEVE, .STEVE_1)
+					}
 				}
-				g.current_dialog_step = 0
-				g.game_state = .DIALOGUE
 			}
 		}
 		g.claire.in_range = collide_with_npc(g.claire, g.player_pos)
 		if g.claire.in_range {
 			if rl.IsKeyPressed(.E) {
-				delete(g.current_dialog.dialog_text)
-				g.current_dialog = Dialog {
-					1,
-					.CLAIRE,
-					.Claire,
-					"claire",
-					load_dialog(.AMANDA_1),
-					.AMANDA_1,
-				}
-				g.current_dialog_step = 0
-				g.game_state = .DIALOGUE
+				handle_dialog(.CLAIRE, .AMANDA_1)
 			}
 		}
 	}
@@ -618,17 +616,14 @@ update :: proc(dt: f32) {
 	switch g.game_state {
 	case .DIALOGUE:
 		size := len(g.current_dialog.dialog_text)
-		// if rl.IsKeyPressed(.Q) {
-		// 	// quit dialogue early
-		// 	g.game_state = .MAIN
-		// }
-
 		if g.story_flag_1 {
 			if g.current_dialog.dialog_enum == .AMANDA_END_1 {
 				if rl.IsKeyPressed(.F) {
 					fmt.println("yes")
-					g.story_flag_1 = false
 					g.game_scene = .SCENE_2
+					g.current_objective.complete = false
+					g.current_objective.dialog_completion = .OBJECTIVE_2_COMPLETE
+					g.objective_necessary_items = load_task(.TASK_2)
 					g.game_state = .MAIN
 				}
 				if rl.IsKeyPressed(.X) {
@@ -638,10 +633,40 @@ update :: proc(dt: f32) {
 			}
 		}
 
+		if g.story_flag_3 {
+			if g.current_dialog.dialog_enum == .OBJECTIVE_3_COMPLETE {
+				if rl.IsKeyPressed(.F) {
+					fmt.println("built lean two")
+					g.lean_two.collected = false
+					g.current_objective.complete = false
+					// g.current_dialog.dialog_completion = false
+					g.game_state = .MAIN
+				}
+				if rl.IsKeyPressed(.X) {
+					fmt.println("didnt build lean two")
+					g.game_state = .MAIN
+				}
+			}
+		}
+
+		if g.current_dialog.dialog_enum == .LEAN_TWO_ITEM {
+			if rl.IsKeyPressed(.F) {
+				fmt.println("Sleep... Trigger dialog from dad")
+				handle_dialog(.STEVE, .STEVE_4)
+			}
+			if rl.IsKeyPressed(.X) {
+				fmt.println("didn't sleep")
+				g.game_state = .MAIN
+			}
+		}
+
 		if rl.IsKeyPressed(.E) {
 			// continue dialogue
 			g.current_dialog_frame = 0
 			if g.current_dialog_step >= (size - 1) {
+				if g.current_dialog.dialog_enum == .STEVE_4 {
+					g.game_scene = .SCENE_1
+				}
 				g.game_state = .MAIN
 			} else {
 				g.current_dialog_step += 1
@@ -671,11 +696,13 @@ update :: proc(dt: f32) {
 			g.game_state = .INVENTORY
 		}
 
-		if rl.IsKeyPressed(.O) {
-			g.game_scene = .SCENE_1
-		}
-		if rl.IsKeyPressed(.L) {
-			g.game_scene = .SCENE_2
+		if g.debug_mode {
+			if rl.IsKeyPressed(.O) {
+				g.game_scene = .SCENE_1
+			}
+			if rl.IsKeyPressed(.L) {
+				g.game_scene = .SCENE_2
+			}
 		}
 
 		if rl.IsKeyPressed(.T) {
@@ -685,6 +712,8 @@ update :: proc(dt: f32) {
 				#partial switch g.current_objective.dialog_completion {
 				case .OBJECTIVE_1_COMPLETE:
 					g.story_flag_1 = true
+				case .OBJECTIVE_3_COMPLETE:
+					g.story_flag_3 = true
 				}
 			}
 		}
@@ -889,12 +918,12 @@ draw :: proc(dt: f32) {
 		draw_item(g.campfire)
 		draw_item(g.climbing_gear)
 		draw_item(g.bear_mace)
-		player_rect := atlas_textures[Texture_Name.Ranger_Base].rect
-		rl.DrawTextureRec(g.atlas, player_rect, g.player_pos, rl.WHITE)
 		draw_npc(g.amanda)
 		draw_npc(g.george)
 		draw_npc(g.brian)
 		draw_npc(g.ida)
+		player_rect := atlas_textures[Texture_Name.Ranger_Base].rect
+		rl.DrawTextureRec(g.atlas, player_rect, g.player_pos, rl.WHITE)
 	case .SCENE_2:
 		draw_tiles_two()
 		draw_trees_two()
@@ -905,10 +934,11 @@ draw :: proc(dt: f32) {
 		draw_item(g.rocks)
 		draw_item(g.paracord)
 		draw_item(g.blanket)
-		player_rect := atlas_textures[Texture_Name.Ranger_Base].rect
-		rl.DrawTextureRec(g.atlas, player_rect, g.player_pos, rl.WHITE)
+		draw_item(g.lean_two)
 		draw_npc(g.steve)
 		draw_npc(g.claire)
+		player_rect := atlas_textures[Texture_Name.Ranger_Base].rect
+		rl.DrawTextureRec(g.atlas, player_rect, g.player_pos, rl.WHITE)
 	}
 
 	// rl.DrawTexturePro(g.atlas, test_anim_rect, dest, origin, 0, rl.WHITE)
@@ -1163,6 +1193,7 @@ game_init :: proc() {
 	g = new(Game_Memory)
 
 	g^ = Game_Memory {
+		debug_mode           = true,
 		game_state           = .MAIN,
 		game_scene           = .SCENE_1,
 		run                  = true,
@@ -1183,6 +1214,10 @@ game_init :: proc() {
 		current_dialog_step  = 0,
 		current_dialog_frame = 0,
 		current_objective    = Objective{false, .OBJECTIVE_1_COMPLETE},
+		story_flag_1         = false,
+		story_flag_2         = false,
+		story_flag_3         = false,
+
 
 		// World Items
 		screwdriver          = Item {
@@ -1337,6 +1372,15 @@ game_init :: proc() {
 			false,
 			false,
 			"Can use to make lean two",
+		},
+		lean_two             = Item {
+			Vec2{140., 30.},
+			Rect{140., 30., 16., 16.},
+			"Lean Two",
+			.Test0,
+			false,
+			true,
+			"",
 		},
 
 
