@@ -80,6 +80,7 @@ NpcType :: enum {
 	OBJECTIVE,
 	AMANDA,
 	STEVE,
+	MAGGIE,
 	CLAIRE,
 	GEORGE,
 	SARAH,
@@ -120,11 +121,16 @@ Dialog :: struct {
 	dialog_enum: DialogMapEnum,
 }
 
+DialogChainNode :: struct {
+	npc:             NpcType,
+	dialog_enum:     DialogMapEnum,
+	next_chain_node: ^DialogChainNode,
+}
+
 Objective :: struct {
 	complete:          bool,
 	dialog_completion: DialogMapEnum,
 }
-
 
 Game_Memory :: struct {
 	debug_mode:                bool,
@@ -140,6 +146,7 @@ Game_Memory :: struct {
 	maggie_texture:            Texture_Name,
 	test_anim:                 Animation,
 	current_dialog:            Dialog,
+	current_dialog_chain:      ^DialogChainNode,
 	current_dialog_step:       int,
 	current_dialog_frame:      int,
 	current_objective:         Objective,
@@ -183,13 +190,24 @@ Game_Memory :: struct {
 g: ^Game_Memory
 
 DialogMapEnum :: enum {
+	OPENING_1,
+	AMANDA_OPEN,
 	AMANDA_1,
 	AMANDA_END_1,
 	AMANDA_2,
 	STEVE_1,
 	STEVE_2,
 	STEVE_3,
-	STEVE_4,
+	STEVE_4_CUTSCENE,
+	MAGGIE_1_CUTSCENE,
+	STEVE_5_CUTSCENE,
+	MAGGIE_2_CUTSCENE,
+	STEVE_6_CUTSCENE,
+	MAGGIE_3_CUTSCENE,
+	STEVE_7_CUTSCENE,
+	MAGGIE_4_CUTSCENE,
+	STEVE_8_CUTSCENE,
+	MAGGIE_5_CUTSCENE,
 	CLAIRE_1,
 	GEORGE_1,
 	SARAH_1,
@@ -223,6 +241,8 @@ DialogMapEnum :: enum {
 }
 
 all_dialog: [DialogMapEnum][]string = {
+	.OPENING_1             = []string{},
+	.AMANDA_OPEN           = []string{},
 	.AMANDA_1              = []string {
 		"Hey there my name is Amanda",
 		"Are you ready to get started?",
@@ -244,11 +264,31 @@ all_dialog: [DialogMapEnum][]string = {
 	},
 	.STEVE_2               = []string{"Thank you...", "Just need to rest now."},
 	.STEVE_3               = []string{"See if you can get some shelter built"},
-	.STEVE_4               = []string {
-		"You did a really good job",
-		"Love you maggie.",
-		"Hope your mom is out there",
+	.STEVE_4_CUTSCENE      = []string{"Maggie, I'm grateful for you. Proud you're my daughter"},
+	.MAGGIE_1_CUTSCENE     = []string{"I know dad"},
+	.STEVE_5_CUTSCENE      = []string {
+		"Look...",
+		"I'm sorry your mom hasn't been who you want her to be lately...",
+		"People are complicated",
 	},
+	.MAGGIE_2_CUTSCENE     = []string {
+		"Dad! Don't defend her, she voted for this! You see what's hap-",
+	},
+	.STEVE_6_CUTSCENE      = []string{"Arg!"},
+	.MAGGIE_3_CUTSCENE     = []string {
+		"Sorry, you're in pain. Look, Mom and I aren't on good terms right now.",
+		"I know you love her... I love her too. But, I just can't get past this.",
+		"It just feels like a betrayal of who she is.",
+		"Who y'all have taught me to be.",
+	},
+	.STEVE_7_CUTSCENE      = []string {
+		"I know... I'm sorry...",
+		"Let's get some rest.",
+		"If we don't hear anything tomorrow, you might need to leave and go get help.",
+	},
+	.MAGGIE_4_CUTSCENE     = []string{"I'm not gonna just leave you-"},
+	.STEVE_8_CUTSCENE      = []string{"Maggie...Please..."},
+	.MAGGIE_5_CUTSCENE     = []string{"Let's just... Get some sleep.", "You need rest."},
 	.CLAIRE_1              = []string{"im claire"},
 	.GEORGE_1              = []string{"im george"},
 	.SARAH_1               = []string{"im sarah"},
@@ -303,6 +343,57 @@ all_dialog: [DialogMapEnum][]string = {
 		"Sleep?",
 		"Press 'f' to progress or 'x' to continue exploring",
 	},
+}
+
+dc_steve_maggie_1: DialogChainNode = {
+	npc             = .STEVE,
+	dialog_enum     = .STEVE_4_CUTSCENE,
+	next_chain_node = &dc_steve_maggie_2,
+}
+dc_steve_maggie_2: DialogChainNode = {
+	npc             = .MAGGIE,
+	dialog_enum     = .MAGGIE_1_CUTSCENE,
+	next_chain_node = &dc_steve_maggie_3,
+}
+dc_steve_maggie_3: DialogChainNode = {
+	npc             = .STEVE,
+	dialog_enum     = .STEVE_5_CUTSCENE,
+	next_chain_node = &dc_steve_maggie_4,
+}
+dc_steve_maggie_4: DialogChainNode = {
+	npc             = .MAGGIE,
+	dialog_enum     = .MAGGIE_2_CUTSCENE,
+	next_chain_node = &dc_steve_maggie_5,
+}
+dc_steve_maggie_5: DialogChainNode = {
+	npc             = .STEVE,
+	dialog_enum     = .STEVE_6_CUTSCENE,
+	next_chain_node = &dc_steve_maggie_6,
+}
+dc_steve_maggie_6: DialogChainNode = {
+	npc             = .MAGGIE,
+	dialog_enum     = .MAGGIE_3_CUTSCENE,
+	next_chain_node = &dc_steve_maggie_7,
+}
+dc_steve_maggie_7: DialogChainNode = {
+	npc             = .STEVE,
+	dialog_enum     = .STEVE_7_CUTSCENE,
+	next_chain_node = &dc_steve_maggie_8,
+}
+dc_steve_maggie_8: DialogChainNode = {
+	npc             = .MAGGIE,
+	dialog_enum     = .MAGGIE_4_CUTSCENE,
+	next_chain_node = &dc_steve_maggie_9,
+}
+dc_steve_maggie_9: DialogChainNode = {
+	npc             = .STEVE,
+	dialog_enum     = .STEVE_8_CUTSCENE,
+	next_chain_node = &dc_steve_maggie_10,
+}
+dc_steve_maggie_10: DialogChainNode = {
+	npc             = .MAGGIE,
+	dialog_enum     = .MAGGIE_5_CUTSCENE,
+	next_chain_node = nil,
 }
 
 load_dialog :: proc(npc_type: DialogMapEnum) -> [dynamic]string {
@@ -532,6 +623,8 @@ handle_dialog :: proc(npc_type: NpcType, dialog_enum: DialogMapEnum) {
 		dialog = Dialog{4, .CLAIRE, .Claire, "Claire", load_dialog(dialog_enum), dialog_enum}
 	case .STEVE:
 		dialog = Dialog{5, .STEVE, .Steve, "Steve", load_dialog(dialog_enum), dialog_enum}
+	case .MAGGIE:
+		dialog = Dialog{10, .MAGGIE, .Maggie, "Maggie", load_dialog(dialog_enum), dialog_enum}
 	case .BRIAN:
 		dialog = Dialog{6, .BRIAN, .Ranger_Sar, "Brian", load_dialog(dialog_enum), dialog_enum}
 	case .GEORGE:
@@ -549,6 +642,12 @@ handle_dialog :: proc(npc_type: NpcType, dialog_enum: DialogMapEnum) {
 	g.current_dialog = dialog
 	g.current_dialog_step = 0
 	g.game_state = .DIALOGUE
+}
+
+
+handle_dialog_chain :: proc(dialog_chain: ^DialogChainNode) -> ^DialogChainNode {
+	handle_dialog(dialog_chain.npc, dialog_chain.dialog_enum)
+	return dialog_chain.next_chain_node
 }
 
 collide_with_item :: proc(item: Item, player_pos: Vec2) -> bool {
@@ -682,8 +781,9 @@ update :: proc(dt: f32) {
 		if g.current_dialog.dialog_enum == .LEAN_TWO_ITEM {
 			if rl.IsKeyPressed(.F) {
 				g.game_scene = .CUTSCENE
-				g.cutscene_texture_name = .Test_Map
-				handle_dialog(.STEVE, .STEVE_4)
+				g.cutscene_texture_name = .Cutscene_1
+				g.current_dialog_chain = &dc_steve_maggie_1
+				// handle_dialog(.STEVE, .STEVE_4_CUTSCENE)
 			}
 			if rl.IsKeyPressed(.X) {
 				g.game_state = .MAIN
@@ -692,15 +792,16 @@ update :: proc(dt: f32) {
 
 		if g.current_dialog.dialog_enum == .OBJECTIVE_5_COMPLETE {
 			g.game_scene = .CUTSCENE
-			g.cutscene_texture_name = .Test_Map
+			g.cutscene_texture_name = .Cutscene_1
 			handle_dialog(.OBJECTIVE, .ENDING_1)
 		}
+
 
 		if rl.IsKeyPressed(.E) {
 			// continue dialogue
 			g.current_dialog_frame = 0
 			if g.current_dialog_step >= (size - 1) {
-				if g.current_dialog.dialog_enum == .STEVE_4 {
+				if g.current_dialog.dialog_enum == .MAGGIE_5_CUTSCENE {
 					g.current_objective.complete = false
 					g.current_objective.dialog_completion = .OBJECTIVE_5_COMPLETE
 					g.objective_necessary_items = load_task(.TASK_5)
@@ -710,7 +811,11 @@ update :: proc(dt: f32) {
 					g.current_objective.complete = false
 					g.game_scene = .ENDING
 				}
-				g.game_state = .MAIN
+				if g.current_dialog_chain != nil {
+					g.current_dialog_chain = handle_dialog_chain(g.current_dialog_chain)
+				} else {
+					g.game_state = .MAIN
+				}
 			} else {
 				g.current_dialog_step += 1
 			}
@@ -1005,6 +1110,15 @@ draw :: proc(dt: f32) {
 		rl.EndMode2D()
 	case .ENDING:
 		rl.BeginMode2D(cutscene_camera())
+		txt := fmt.ctprintf("FIN")
+		rl.DrawTextEx(
+			g.font,
+			txt,
+			Vec2{PIXEL_WINDOW_HEIGHT / 2, PIXEL_WINDOW_HEIGHT / 2},
+			8,
+			1,
+			rl.WHITE,
+		)
 		rl.EndMode2D()
 	}
 
@@ -1019,21 +1133,21 @@ draw :: proc(dt: f32) {
 	// NOTE: `fmt.ctprintf` uses the temp allocator. The temp allocator is
 	// cleared at the end of the frame by the main application, meaning inside
 	// `main_hot_reload.odin`, `main_release.odin` or `main_web_entry.odin`.
-	rl.DrawText(
-		fmt.ctprintf(
-			"some_number: %v\nplayer_pos: %v\nscrewdriver collected: %v\nhammer collected: %v\nin dialogue%v\nobj complete:%v\n",
-			g.some_number,
-			g.player_pos,
-			g.screwdriver.collected,
-			g.hammer.collected,
-			g.game_state == .DIALOGUE,
-			g.current_objective.complete,
-		),
-		5,
-		5,
-		8,
-		rl.WHITE,
-	)
+	// rl.DrawText(
+	// 	fmt.ctprintf(
+	// 		"some_number: %v\nplayer_pos: %v\nscrewdriver collected: %v\nhammer collected: %v\nin dialogue%v\nobj complete:%v\n",
+	// 		g.some_number,
+	// 		g.player_pos,
+	// 		g.screwdriver.collected,
+	// 		g.hammer.collected,
+	// 		g.game_state == .DIALOGUE,
+	// 		g.current_objective.complete,
+	// 	),
+	// 	5,
+	// 	5,
+	// 	8,
+	// 	rl.WHITE,
+	// )
 
 	if g.game_state == .DIALOGUE {
 		draw_dialog(g.current_dialog, g.current_dialog_step, g.current_dialog_frame)
@@ -1267,6 +1381,7 @@ game_init :: proc() {
 		game_scene                = .SCENE_1,
 		run                       = true,
 		some_number               = 100,
+		current_dialog_chain      = nil,
 
 		// You can put textures, sounds and music in the `assets` folder. Those
 		// files will be part any release or web build.
