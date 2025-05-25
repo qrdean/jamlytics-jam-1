@@ -50,6 +50,7 @@ Game_Scene :: enum {
 	SCENE_1,
 	SCENE_2,
 	SCENE_3,
+	TITLE,
 	CUTSCENE,
 	ENDING,
 }
@@ -78,6 +79,7 @@ ItemType :: enum {
 NpcType :: enum {
 	ITEM,
 	OBJECTIVE,
+	YOU,
 	AMANDA,
 	STEVE,
 	MAGGIE,
@@ -195,6 +197,12 @@ DialogMapEnum :: enum {
 	AMANDA_1,
 	AMANDA_END_1,
 	AMANDA_2,
+	YOU_RADIO_CUTSCENE_1,
+	AMANDA_CUTSCENE_1,
+	INDISTINGUISH,
+	YOU_FIND_CUTSCENE_1,
+	MAGGIE_FIND_CUTSCENE_1,
+	YOU_FIND_CUTSCENE_2,
 	STEVE_1,
 	STEVE_2,
 	STEVE_3,
@@ -214,6 +222,12 @@ DialogMapEnum :: enum {
 	BRIAN_1,
 	IDA_1,
 	ENDING_1,
+	ENDING_CUTSCENE_AMANDA_1,
+	ENDING_CUTSCENE_YOU_1,
+	ENDING_CUTSCENE_AMANDA_2,
+	ENDING_CUTSCENE_YOU_2,
+	ENDING_CUTSCENE_AMANDA_3,
+	ENDING_CUTSCENE_YOU_3,
 	OBJECTIVE_1_COMPLETE,
 	OBJECTIVE_2_COMPLETE,
 	OBJECTIVE_3_COMPLETE,
@@ -241,109 +255,172 @@ DialogMapEnum :: enum {
 }
 
 all_dialog: [DialogMapEnum][]string = {
-	.OPENING_1             = []string{},
-	.AMANDA_OPEN           = []string{},
-	.AMANDA_1              = []string {
+	.OPENING_1                = []string {
+		"Becoming a Park Ranger has been one of the most fulfilling jobs I've ever had.",
+		"I've gotten to connect with people and nature like never before in my life.",
+		"Yeah, cleaning the restrooms and picking up garbase sucks...",
+		"But it brings me joy when people say how clean",
+		"our restrooms are and how beautiful the land is.",
+		"Helping people experience nature is so much more fulfilling than the Software Job I had.",
+		"Wonder what adventure we'll have today?",
+	},
+	.AMANDA_OPEN              = []string {
+		"Hey nooby! Got a big one for you.",
+		"I just met with a mother who says her husband and daughter didn't",
+		"come back from their hike yesterday.",
+		"I want you to come check it out with me.",
+		"I've been tasked with being the incident commander.",
+		"We have a volunteer Search & Rescue teams coming to help,",
+		"But it'll take a bit for them to get here.",
+		"Luckily we have the trail head they were supposed to take.",
+		"Let's go check it out.",
+	},
+	.AMANDA_1                 = []string {
 		"Hey there my name is Amanda",
 		"Are you ready to get started?",
 		"Great job, you are doing great!",
 	},
-	.AMANDA_END_1          = []string {
+	.AMANDA_END_1             = []string {
 		"Are you ready to wait?",
 		"Press 'f' to progress or 'x' to continue exploring",
 	},
-	.AMANDA_2              = []string {
-		"Probably should start searching again today.",
-		"Take a look at that path.",
+	.AMANDA_2                 = []string {
+		"Alright, based on our findings so far, we have a pretty distinct path to see where they went.",
+		"The SAR will fan out, I want you to go East and see what you can find. If you find anything don't hestitate to radio.",
 	},
-	.STEVE_1               = []string {
+	.YOU_RADIO_CUTSCENE_1     = []string {
+		"Looks like they might be back here. Come this way, I'll keep going",
+	},
+	.AMANDA_CUTSCENE_1        = []string{"Alright, I'll be on your tail shortly."},
+	.INDISTINGUISH            = []string{"* indistiguishable chatter *"},
+	.YOU_FIND_CUTSCENE_1      = []string{"HELLO?!"},
+	.MAGGIE_FIND_CUTSCENE_1   = []string {
+		"HELLO? IS SOMEONE THERE???",
+		"PLEASE HELP MY DAD IS BADLY HURT. HIS LEG IS BUSTED AND NEEDS ASSITANCE!",
+	},
+	.YOU_FIND_CUTSCENE_2      = []string{"YES, WE'RE ON OUR WAY"},
+	.STEVE_1                  = []string {
 		"Arggh!",
 		"My legs broken...",
 		"There is medical tape in the backpack.",
 		"Find a sturdy branch to splint it.",
 	},
-	.STEVE_2               = []string{"Thank you...", "Just need to rest now."},
-	.STEVE_3               = []string{"See if you can get some shelter built"},
-	.STEVE_4_CUTSCENE      = []string{"Maggie, I'm grateful for you. Proud you're my daughter"},
-	.MAGGIE_1_CUTSCENE     = []string{"I know dad"},
-	.STEVE_5_CUTSCENE      = []string {
+	.STEVE_2                  = []string{"Thank you...", "Just need to rest now."},
+	.STEVE_3                  = []string{"See if you can get some shelter built"},
+	.STEVE_4_CUTSCENE         = []string{"Maggie, I'm grateful for you. Proud you're my daughter"},
+	.MAGGIE_1_CUTSCENE        = []string{"I know dad"},
+	.STEVE_5_CUTSCENE         = []string {
 		"Look...",
 		"I'm sorry your mom hasn't been who you want her to be lately...",
 		"People are complicated",
 	},
-	.MAGGIE_2_CUTSCENE     = []string {
+	.MAGGIE_2_CUTSCENE        = []string {
 		"Dad! Don't defend her, she voted for this! You see what's hap-",
 	},
-	.STEVE_6_CUTSCENE      = []string{"Arg!"},
-	.MAGGIE_3_CUTSCENE     = []string {
+	.STEVE_6_CUTSCENE         = []string{"Arg!"},
+	.MAGGIE_3_CUTSCENE        = []string {
 		"Sorry, you're in pain. Look, Mom and I aren't on good terms right now.",
 		"I know you love her... I love her too. But, I just can't get past this.",
 		"It just feels like a betrayal of who she is.",
 		"Who y'all have taught me to be.",
 	},
-	.STEVE_7_CUTSCENE      = []string {
+	.STEVE_7_CUTSCENE         = []string {
 		"I know... I'm sorry...",
 		"Let's get some rest.",
 		"If we don't hear anything tomorrow, you might need to leave and go get help.",
 	},
-	.MAGGIE_4_CUTSCENE     = []string{"I'm not gonna just leave you-"},
-	.STEVE_8_CUTSCENE      = []string{"Maggie...Please..."},
-	.MAGGIE_5_CUTSCENE     = []string{"Let's just... Get some sleep.", "You need rest."},
-	.CLAIRE_1              = []string{"im claire"},
-	.GEORGE_1              = []string{"im george"},
-	.SARAH_1               = []string{"im sarah"},
-	.BRIAN_1               = []string{"im brian"},
-	.IDA_1                 = []string{"im ida"},
-	.ENDING_1              = []string{"Fin."},
-	.OBJECTIVE_1_COMPLETE  = []string {
+	.MAGGIE_4_CUTSCENE        = []string{"I'm not gonna just leave you-"},
+	.STEVE_8_CUTSCENE         = []string{"Maggie...Please..."},
+	.MAGGIE_5_CUTSCENE        = []string{"Let's just... Get some sleep.", "You need rest."},
+	.CLAIRE_1                 = []string{"im claire"},
+	.GEORGE_1                 = []string{"im george"},
+	.SARAH_1                  = []string{"im sarah"},
+	.BRIAN_1                  = []string{"im brian"},
+	.IDA_1                    = []string{"im ida"},
+	.ENDING_1                 = []string{"Fin."},
+	.ENDING_CUTSCENE_AMANDA_1 = []string {
+		"Great job keeping your cool out there.",
+		"That was pretty scary. I'm just happy we found them!",
+		"How are you feeling?",
+	},
+	.ENDING_CUTSCENE_YOU_1    = []string {
+		"Alright I guess...",
+		"It was really nice seeing a father/daughter together bonding, even in trauma.",
+		"They're there for each other you know?",
+		"Gives me hope.",
+	},
+	.ENDING_CUTSCENE_AMANDA_2 = []string{"Yeah? Your family been... On the koolaid too?"},
+	.ENDING_CUTSCENE_YOU_2    = []string{"Yeah..."},
+	.ENDING_CUTSCENE_AMANDA_3 = []string {
+		"I'm sorry. Well, we're your family too. We look out for each other",
+	},
+	.ENDING_CUTSCENE_YOU_3    = []string {
+		"Thanks. I know. This has been the right place at the right time.",
+	},
+	.OBJECTIVE_1_COMPLETE     = []string {
 		"You've found enough clues for now.",
 		"Let's wait for the Search & Rescue team to arrive",
 		"Talk to Amanda to Progress the Story.",
 	},
-	.OBJECTIVE_2_COMPLETE  = []string{"Go treat your dad's leg."},
-	.OBJECTIVE_3_COMPLETE  = []string {
+	.OBJECTIVE_2_COMPLETE     = []string{"Go treat your dad's leg."},
+	.OBJECTIVE_3_COMPLETE     = []string {
 		"You've got the materials to build a lean two.",
 		"Build it?",
 		"Press 'f' to progress or 'x' to continue exploring",
 	},
-	.OBJECTIVE_4_COMPLETE  = []string{"Lean Two is built. Should go check it out."},
-	.OBJECTIVE_5_COMPLETE  = []string{"Go check out the trails"},
+	.OBJECTIVE_4_COMPLETE     = []string{"Lean Two is built. Should go check it out."},
+	.OBJECTIVE_5_COMPLETE     = []string{"Go check out the trails"},
 
 	// Items & Clues
-	.SCREWDRIVER_ITEM      = []string{"This is a Screwdriver"},
-	.MOVED_BRUSH_CLUE      = []string{"Looks like some broken brush."},
-	.KEYS_CLUE             = []string{"A pair of car keys belonging to that truck"},
-	.SCUFFED_MOSS_CLUE     = []string{"The moss on this log has been moved."},
-	.FOOT_PRINTS_CLUE      = []string{"2 sets of foot prints."},
-	.CAR_CLUE              = []string{"This truck matches the description Claire gave"},
-	.CAMPFIRE_CLUE         = []string{"It's been out for days..."},
-	.CLIMBING_GEAR_CLUE    = []string{"Looks like they were avid climbers"},
-	.BEAR_MACE_CLUE        = []string{"An empty can of bear mace."},
-	.STURDY_SPLINT_ITEM    = []string {
+	.SCREWDRIVER_ITEM         = []string{"This is a Screwdriver"},
+	.MOVED_BRUSH_CLUE         = []string{"Looks like some broken brush."},
+	.KEYS_CLUE                = []string{"A pair of car keys belonging to that truck"},
+	.SCUFFED_MOSS_CLUE        = []string{"The moss on this log has been moved."},
+	.FOOT_PRINTS_CLUE         = []string{"2 sets of foot prints."},
+	.CAR_CLUE                 = []string{"This truck matches the description Claire gave"},
+	.CAMPFIRE_CLUE            = []string{"It's been out for days..."},
+	.CLIMBING_GEAR_CLUE       = []string{"Looks like they were avid climbers"},
+	.BEAR_MACE_CLUE           = []string{"An empty can of bear mace."},
+	.STURDY_SPLINT_ITEM       = []string {
 		"Sturdy piece of relatively wood.",
 		"Could use it to help dad.",
 	},
-	.MEDICAL_TAPE_ITEM     = []string{"Medical tape. Can use it to help dad."},
-	.PHONE_ITEM            = []string {
+	.MEDICAL_TAPE_ITEM        = []string{"Medical tape. Can use it to help dad."},
+	.PHONE_ITEM               = []string {
 		"It's dead. Wouldn't do much good anyway without signal though.",
 		"Hope someone is looking for us.",
 		"Mom...",
 	},
-	.STURDY_TREE_LIMB_CLUE = []string{"Sturdy Tree Limb", "Could use these to build a lean two."},
-	.ROCKS_CLUE            = []string {
+	.STURDY_TREE_LIMB_CLUE    = []string {
+		"Sturdy Tree Limb",
+		"Could use these to build a lean two.",
+	},
+	.ROCKS_CLUE               = []string {
 		"Sturdy rocks.",
 		"Could use these to weigh down the blanket for the lean two.",
 	},
-	.PARACORD_ITEM         = []string {
+	.PARACORD_ITEM            = []string {
 		"Nice strong paracord. Lucky this was in the bag",
 		"Could use this cord to tie the blanket to the trees.",
 	},
-	.BLANKET_ITEM          = []string{"A good warm covering"},
-	.LEAN_TWO_ITEM         = []string {
+	.BLANKET_ITEM             = []string{"A good warm covering"},
+	.LEAN_TWO_ITEM            = []string {
 		"Sleep?",
 		"Press 'f' to progress or 'x' to continue exploring",
 	},
 }
+
+dc_intro_1: DialogChainNode = {
+	npc             = .YOU,
+	dialog_enum     = .OPENING_1,
+	next_chain_node = &dc_intro_2,
+}
+dc_intro_2: DialogChainNode = {
+	npc             = .AMANDA,
+	dialog_enum     = .AMANDA_OPEN,
+	next_chain_node = nil,
+}
+
 
 dc_steve_maggie_1: DialogChainNode = {
 	npc             = .STEVE,
@@ -395,6 +472,54 @@ dc_steve_maggie_10: DialogChainNode = {
 	dialog_enum     = .MAGGIE_5_CUTSCENE,
 	next_chain_node = nil,
 }
+
+dc_find_1: DialogChainNode = {
+	npc             = .YOU,
+	dialog_enum     = .YOU_FIND_CUTSCENE_1,
+	next_chain_node = &dc_find_2,
+}
+dc_find_2: DialogChainNode = {
+	npc             = .MAGGIE,
+	dialog_enum     = .MAGGIE_FIND_CUTSCENE_1,
+	next_chain_node = &dc_find_3,
+}
+dc_find_3: DialogChainNode = {
+	npc             = .YOU,
+	dialog_enum     = .YOU_FIND_CUTSCENE_2,
+	next_chain_node = nil,
+}
+
+dc_ending_1: DialogChainNode = {
+	npc             = .AMANDA,
+	dialog_enum     = .ENDING_CUTSCENE_AMANDA_1,
+	next_chain_node = &dc_ending_2,
+}
+dc_ending_2: DialogChainNode = {
+	npc             = .YOU,
+	dialog_enum     = .ENDING_CUTSCENE_YOU_1,
+	next_chain_node = &dc_ending_3,
+}
+dc_ending_3: DialogChainNode = {
+	npc             = .AMANDA,
+	dialog_enum     = .ENDING_CUTSCENE_AMANDA_2,
+	next_chain_node = &dc_ending_4,
+}
+dc_ending_4: DialogChainNode = {
+	npc             = .YOU,
+	dialog_enum     = .ENDING_CUTSCENE_YOU_2,
+	next_chain_node = &dc_ending_5,
+}
+dc_ending_5: DialogChainNode = {
+	npc             = .AMANDA,
+	dialog_enum     = .ENDING_CUTSCENE_AMANDA_3,
+	next_chain_node = &dc_ending_6,
+}
+dc_ending_6: DialogChainNode = {
+	npc             = .YOU,
+	dialog_enum     = .ENDING_CUTSCENE_YOU_3,
+	next_chain_node = nil,
+}
+
 
 load_dialog :: proc(npc_type: DialogMapEnum) -> [dynamic]string {
 	dialog_text := make([dynamic]string, context.allocator)
@@ -611,6 +736,7 @@ handle_item_interactions :: proc() {
 		)
 	case .CUTSCENE:
 	case .ENDING:
+	case .TITLE:
 	}
 }
 
@@ -625,6 +751,8 @@ handle_dialog :: proc(npc_type: NpcType, dialog_enum: DialogMapEnum) {
 		dialog = Dialog{5, .STEVE, .Steve, "Steve", load_dialog(dialog_enum), dialog_enum}
 	case .MAGGIE:
 		dialog = Dialog{10, .MAGGIE, .Maggie, "Maggie", load_dialog(dialog_enum), dialog_enum}
+	case .YOU:
+		dialog = Dialog{11, .YOU, .Ranger_Base, "You", load_dialog(dialog_enum), dialog_enum}
 	case .BRIAN:
 		dialog = Dialog{6, .BRIAN, .Ranger_Sar, "Brian", load_dialog(dialog_enum), dialog_enum}
 	case .GEORGE:
@@ -732,6 +860,7 @@ handle_npc_interactions :: proc() {
 		}
 	case .CUTSCENE:
 	case .ENDING:
+	case .TITLE:
 	}
 }
 
@@ -783,7 +912,7 @@ update :: proc(dt: f32) {
 				g.game_scene = .CUTSCENE
 				g.cutscene_texture_name = .Cutscene_1
 				g.current_dialog_chain = &dc_steve_maggie_1
-				// handle_dialog(.STEVE, .STEVE_4_CUTSCENE)
+				g.current_dialog_chain = handle_dialog_chain(g.current_dialog_chain)
 			}
 			if rl.IsKeyPressed(.X) {
 				g.game_state = .MAIN
@@ -793,21 +922,31 @@ update :: proc(dt: f32) {
 		if g.current_dialog.dialog_enum == .OBJECTIVE_5_COMPLETE {
 			g.game_scene = .CUTSCENE
 			g.cutscene_texture_name = .Cutscene_1
-			handle_dialog(.OBJECTIVE, .ENDING_1)
+			g.current_dialog_chain = &dc_find_1
+			g.current_dialog_chain = handle_dialog_chain(g.current_dialog_chain)
 		}
 
+		if g.current_dialog.dialog_enum == .YOU_FIND_CUTSCENE_2 {
+			g.game_scene = .CUTSCENE
+			g.cutscene_texture_name = .Cutscene_1
+			g.current_dialog_chain = &dc_ending_1
+			g.current_dialog_chain = handle_dialog_chain(g.current_dialog_chain)
+		}
 
 		if rl.IsKeyPressed(.E) {
 			// continue dialogue
 			g.current_dialog_frame = 0
 			if g.current_dialog_step >= (size - 1) {
+				if g.current_dialog.dialog_enum == .AMANDA_OPEN {
+					g.game_scene = .SCENE_1
+				}
 				if g.current_dialog.dialog_enum == .MAGGIE_5_CUTSCENE {
 					g.current_objective.complete = false
 					g.current_objective.dialog_completion = .OBJECTIVE_5_COMPLETE
 					g.objective_necessary_items = load_task(.TASK_5)
 					g.game_scene = .SCENE_3
 				}
-				if g.current_dialog.dialog_enum == .ENDING_1 {
+				if g.current_dialog.dialog_enum == .ENDING_CUTSCENE_YOU_3 {
 					g.current_objective.complete = false
 					g.game_scene = .ENDING
 				}
@@ -826,6 +965,14 @@ update :: proc(dt: f32) {
 			g.game_state = .MAIN
 		}
 	case .MAIN:
+		if g.game_scene == .TITLE {
+			if rl.IsKeyPressed(.ENTER) {
+				g.current_dialog_chain = handle_dialog_chain(&dc_intro_1)
+				g.game_scene = .CUTSCENE
+				g.game_state = .DIALOGUE
+			}
+			return
+		}
 		input: rl.Vector2
 
 		if rl.IsKeyDown(.UP) || rl.IsKeyDown(.W) {
@@ -1040,6 +1187,31 @@ draw_cutscene :: proc(cutscene_texture_name: Texture_Name) {
 	rl.DrawTextureRec(g.atlas, cutscene_rect, Vec2{0., 0.}, rl.WHITE)
 }
 
+draw_background :: proc() {
+	background_rec := atlas_textures[Texture_Name.Tree_Background].rect
+	rl.DrawTextureRec(g.atlas, background_rec, Vec2{-320., -192.}, rl.WHITE)
+	rl.DrawTextureRec(g.atlas, background_rec, Vec2{0., 0.}, rl.WHITE)
+	rl.DrawTextureRec(g.atlas, background_rec, Vec2{-320., 0.}, rl.WHITE)
+	rl.DrawTextureRec(g.atlas, background_rec, Vec2{-320., 192.}, rl.WHITE)
+	rl.DrawTextureRec(g.atlas, background_rec, Vec2{-320., 384.}, rl.WHITE)
+
+	// Column 2
+	rl.DrawTextureRec(g.atlas, background_rec, Vec2{0., -192.}, rl.WHITE)
+	rl.DrawTextureRec(g.atlas, background_rec, Vec2{0., 0.}, rl.WHITE)
+	rl.DrawTextureRec(g.atlas, background_rec, Vec2{0., 192.}, rl.WHITE)
+	rl.DrawTextureRec(g.atlas, background_rec, Vec2{0., 384.}, rl.WHITE)
+	// Column 3
+	rl.DrawTextureRec(g.atlas, background_rec, Vec2{320., -192.}, rl.WHITE)
+	rl.DrawTextureRec(g.atlas, background_rec, Vec2{320., 0.}, rl.WHITE)
+	rl.DrawTextureRec(g.atlas, background_rec, Vec2{320., 192.}, rl.WHITE)
+	rl.DrawTextureRec(g.atlas, background_rec, Vec2{320., 384.}, rl.WHITE)
+	// Column 4
+	rl.DrawTextureRec(g.atlas, background_rec, Vec2{640., -192.}, rl.WHITE)
+	rl.DrawTextureRec(g.atlas, background_rec, Vec2{640., 0.}, rl.WHITE)
+	rl.DrawTextureRec(g.atlas, background_rec, Vec2{640., 192.}, rl.WHITE)
+	rl.DrawTextureRec(g.atlas, background_rec, Vec2{640., 384.}, rl.WHITE)
+}
+
 draw :: proc(dt: f32) {
 	rl.BeginDrawing()
 	rl.ClearBackground(rl.BLACK)
@@ -1060,6 +1232,7 @@ draw :: proc(dt: f32) {
 	switch g.game_scene {
 	case .SCENE_1:
 		rl.BeginMode2D(game_camera(g.player_pos))
+		draw_background()
 		draw_tiles()
 		draw_trees()
 		draw_item(g.screwdriver)
@@ -1075,6 +1248,12 @@ draw :: proc(dt: f32) {
 		rl.EndMode2D()
 	case .SCENE_2:
 		rl.BeginMode2D(game_camera(g.player_pos))
+		background_rec := atlas_textures[Texture_Name.Tree_Background].rect
+		rl.DrawTextureRec(g.atlas, background_rec, Vec2{0., 0.}, rl.WHITE)
+		rl.DrawTextureRec(g.atlas, background_rec, Vec2{-320., -180.}, rl.WHITE)
+		rl.DrawTextureRec(g.atlas, background_rec, Vec2{-320., 0.}, rl.WHITE)
+		rl.DrawTextureRec(g.atlas, background_rec, Vec2{-320., 180.}, rl.WHITE)
+		rl.DrawTextureRec(g.atlas, background_rec, Vec2{-320., 360.}, rl.WHITE)
 		draw_tiles_two()
 		draw_trees_two()
 		draw_item(g.sturdy_splint)
@@ -1092,6 +1271,12 @@ draw :: proc(dt: f32) {
 		rl.EndMode2D()
 	case .SCENE_3:
 		rl.BeginMode2D(game_camera(g.player_pos))
+		background_rec := atlas_textures[Texture_Name.Tree_Background].rect
+		rl.DrawTextureRec(g.atlas, background_rec, Vec2{0., 0.}, rl.WHITE)
+		rl.DrawTextureRec(g.atlas, background_rec, Vec2{-320., -180.}, rl.WHITE)
+		rl.DrawTextureRec(g.atlas, background_rec, Vec2{-320., 0.}, rl.WHITE)
+		rl.DrawTextureRec(g.atlas, background_rec, Vec2{-320., 180.}, rl.WHITE)
+		rl.DrawTextureRec(g.atlas, background_rec, Vec2{-320., 360.}, rl.WHITE)
 		draw_tiles()
 		draw_trees()
 		draw_item(g.scuffed_moss)
@@ -1120,6 +1305,24 @@ draw :: proc(dt: f32) {
 			rl.WHITE,
 		)
 		rl.EndMode2D()
+	case .TITLE:
+		rl.BeginMode2D(cutscene_camera())
+		// Draw title cutscene
+		draw_cutscene(g.cutscene_texture_name)
+		txt := fmt.ctprintf("Press Enter to Start")
+		rl.DrawTextEx(
+			g.font,
+			txt,
+			Vec2{PIXEL_WINDOW_HEIGHT / 2, PIXEL_WINDOW_HEIGHT / 2},
+			8,
+			1,
+			rl.WHITE,
+		)
+		rl.EndMode2D()
+	// case .INTRO:
+	// 	rl.BeginMode2D(cutscene_camera())
+	// 	draw_cutscene(g.cutscene_texture_name)
+	// 	rl.EndMode2D()
 	}
 
 	// rl.DrawTexturePro(g.atlas, test_anim_rect, dest, origin, 0, rl.WHITE)
@@ -1259,6 +1462,32 @@ draw_tiles :: proc() {
 	}
 }
 
+draw_tiles_new :: proc() {
+	for i in 0 ..< GRID_SIZE_NEW {
+		for j in 0 ..< GRID_SIZE_NEW {
+			x := i32(i * CELL_SIZE)
+			y := i32(j * CELL_SIZE)
+			tile := grid_copy_new[j][i]
+			tile_pos := get_tileset_pos(tile)
+			draw_tile(tile_pos.x, tile_pos.y, {f32(x), f32(y)}, false)
+			rl.DrawRectangleLines(x, y, CELL_SIZE, CELL_SIZE, rl.DARKGRAY)
+		}
+	}
+}
+draw_trees_new :: proc() {
+	for i in 0 ..< GRID_SIZE_NEW {
+		for j in 0 ..< GRID_SIZE_NEW {
+			x := i32(i * CELL_SIZE)
+			y := i32(j * CELL_SIZE)
+			tile := grid_copy_new[j][i]
+			if tile == .TWL {
+				tree := atlas_textures[.Tree_3]
+				rl.DrawTextureRec(g.atlas, tree.rect, {f32(x), f32(y)}, rl.WHITE)
+			}
+		}
+	}
+}
+
 draw_tiles_two :: proc() {
 	for i in 0 ..< GRID_SIZE {
 		for j in 0 ..< GRID_SIZE {
@@ -1279,7 +1508,7 @@ draw_trees :: proc() {
 			y := i32(j * CELL_SIZE)
 			tile := grid[j][i]
 			if tile == .TWL {
-				tree := atlas_textures[.Tree_1]
+				tree := atlas_textures[.Tree_3]
 				rl.DrawTextureRec(g.atlas, tree.rect, {f32(x), f32(y)}, rl.WHITE)
 			}
 		}
@@ -1293,7 +1522,7 @@ draw_trees_two :: proc() {
 			y := i32(j * CELL_SIZE)
 			tile := grid_two[j][i]
 			if tile == .TWL {
-				tree := atlas_textures[.Tree_1]
+				tree := atlas_textures[.Tree_3]
 				rl.DrawTextureRec(g.atlas, tree.rect, {f32(x), f32(y)}, rl.WHITE)
 			}
 		}
@@ -1365,7 +1594,7 @@ game_update :: proc() {
 game_init_window :: proc() {
 	rl.SetConfigFlags({.WINDOW_RESIZABLE, .VSYNC_HINT})
 	rl.InitWindow(1280, 720, "Odin + Raylib + Hot Reload template!")
-	rl.SetWindowPosition(200, 200)
+	// rl.SetWindowPosition(200, 200)
 	rl.SetTargetFPS(500)
 	rl.SetExitKey(nil)
 }
@@ -1378,10 +1607,12 @@ game_init :: proc() {
 	g^ = Game_Memory {
 		debug_mode                = true,
 		game_state                = .MAIN,
-		game_scene                = .SCENE_1,
+		game_scene                = .TITLE,
 		run                       = true,
 		some_number               = 100,
 		current_dialog_chain      = nil,
+		cutscene_texture_name     = .Cutscene_1,
+		player_pos                = rl.Vector2{100., 100.},
 
 		// You can put textures, sounds and music in the `assets` folder. Those
 		// files will be part any release or web build.
