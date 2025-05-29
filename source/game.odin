@@ -166,7 +166,6 @@ Game_Memory :: struct {
 	story_flag_3:                bool, // make lean two
 	cutscene_transition_timer:   f32,
 	cutscene_overlay_txt:        string,
-	word_timer:                  Timer,
 
 	// Refactor into array
 	screwdriver:                 Item,
@@ -266,29 +265,25 @@ DialogMapEnum :: enum {
 
 all_dialog: [DialogMapEnum][]string = {
 	.OPENING_1                = []string {
-		"Becoming a Park Ranger has been one of the most\n fulfilling jobs I've ever had.",
-		"I've gotten to connect with people and nature\n like never before in my life.",
-		"Yeah, cleaning the restrooms and picking up\n garbase sucks...",
-		"But it brings me joy when people say how clean",
-		"our restrooms are and how beautiful the land is.",
+		"Becoming a Park Ranger has been a\n fulfilling job.",
+		"I've gotten to connect with people and nature.",
 		"Helping people experience nature is so\n much more fulfilling than the Software Job I had.",
-		"Wonder what adventure we'll have today?",
+		"Nature truly is beautiful!",
 	},
 	.AMANDA_OPEN              = []string {
-		"Hey nooby! Got a big one for you.",
-		"I just met with a mother who says\n her husband and daughter didn't",
+		"Hey!",
+		"I just got a call from a mother who said\n her husband and daughter didn't",
 		"come back from their hike yesterday.",
 		"I want you to come check it out with me.",
-		"I've been tasked with being the incident commander.",
-		"We have a volunteer Search & Rescue teams\n coming to help,",
+		"We have a volunteer Search & Rescue teams\n coming to help.",
 		"But it'll take a bit for them to get here.",
 		"Luckily we have the trail head they were\n supposed to take.",
 		"Let's go check it out.",
 	},
 	.AMANDA_1                 = []string {
-		"Hey there my name is Amanda",
-		"Are you ready to get started?",
-		"Great job, you are doing great!",
+		"Well looks like the truck is here,\n that matches the description.",
+		"I'll stay here at the trail head just in case.",
+		"Go check it out.",
 	},
 	.AMANDA_END_1             = []string {
 		"Are you ready to wait?",
@@ -529,7 +524,6 @@ dc_ending_6: DialogChainNode = {
 	dialog_enum     = .ENDING_CUTSCENE_YOU_3,
 	next_chain_node = nil,
 }
-
 
 load_dialog :: proc(npc_type: DialogMapEnum) -> [dynamic]string {
 	dialog_text := make([dynamic]string, context.allocator)
@@ -917,7 +911,8 @@ update :: proc(dt: f32) {
 		size := len(g.current_dialog.dialog_text)
 		if g.current_dialog.dialog_enum == .AMANDA_END_1 {
 			if rl.IsKeyPressed(.F) {
-				fmt.println("yes")
+				g.cutscene_overlay_txt = "EARLIER.."
+				g.cutscene_transition_timer = 0.
 				g.game_scene = .SCENE_2
 				g.current_objective.complete = false
 				g.current_objective.dialog_completion = .OBJECTIVE_2_COMPLETE
@@ -925,7 +920,6 @@ update :: proc(dt: f32) {
 				g.game_state = .MAIN
 			}
 			if rl.IsKeyPressed(.X) {
-				fmt.println("no")
 				g.game_state = .MAIN
 			}
 		}
@@ -1009,7 +1003,7 @@ update :: proc(dt: f32) {
 					g.current_dialog_step += 1
 				}
 			}
-			g.current_dialog_frame += 2
+			g.current_dialog_frame += 3
 		}
 	case .INVENTORY:
 		if rl.IsKeyPressed(.Q) {
@@ -1338,18 +1332,6 @@ draw :: proc(dt: f32) {
 		rl.BeginMode2D(cutscene_camera())
 		draw_cutscene_tiles()
 		draw_npc_cutscene_tiles(g.cutscene_pos_1_texture_name, g.cutscene_pos_2_texture_name)
-		if g.cutscene_transition_timer < CUTSCENE_TRANSITION_TIME {
-			rl.DrawRectangleV(Vec2{0., 0.}, Vec2{1280., 720.}, rl.BLACK)
-			rl.DrawTextEx(
-				g.font,
-				fmt.ctprintf("%v", g.cutscene_overlay_txt),
-				Vec2{PIXEL_WINDOW_HEIGHT / 4, PIXEL_WINDOW_HEIGHT / 4},
-				8,
-				1,
-				rl.WHITE,
-			)
-		}
-		g.cutscene_transition_timer += dt
 		rl.EndMode2D()
 	case .ENDING:
 		rl.BeginMode2D(title_camera())
@@ -1379,6 +1361,20 @@ draw :: proc(dt: f32) {
 		rl.EndMode2D()
 	}
 
+	if g.cutscene_transition_timer < CUTSCENE_TRANSITION_TIME {
+		rl.BeginMode2D(cutscene_camera())
+		rl.DrawRectangleV(Vec2{0., 0.}, Vec2{1280., 720.}, rl.BLACK)
+		rl.DrawTextEx(
+			g.font,
+			fmt.ctprintf("%v", g.cutscene_overlay_txt),
+			Vec2{PIXEL_WINDOW_HEIGHT / 4, PIXEL_WINDOW_HEIGHT / 4},
+			8,
+			1,
+			rl.WHITE,
+		)
+		rl.EndMode2D()
+	}
+	g.cutscene_transition_timer += dt
 
 	// rl.DrawTexturePro(g.atlas, test_anim_rect, dest, origin, 0, rl.WHITE)
 	// rl.DrawTextureEx(g.player_texture, g.player_pos, 0, 1, rl.WHITE)
@@ -1740,7 +1736,6 @@ game_init :: proc() {
 		story_flag_1                = false,
 		story_flag_2                = false,
 		story_flag_3                = false,
-		word_timer                  = Timer{0., 2.},
 		cutscene_pos_1_texture_name = .Ranger_Base,
 		cutscene_pos_2_texture_name = .Amanda,
 		cutscene_overlay_txt        = "...",
