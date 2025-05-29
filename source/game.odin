@@ -98,6 +98,7 @@ Item :: struct {
 	in_range:              bool,
 	collected:             bool,
 	note_book_description: string,
+	visible_on_collection: bool,
 }
 
 Npc :: struct {
@@ -135,57 +136,62 @@ Objective :: struct {
 }
 
 Game_Memory :: struct {
-	debug_mode:                bool,
-	game_state:                Game_State,
-	game_scene:                Game_Scene,
-	run:                       bool,
-	atlas:                     rl.Texture,
-	font:                      rl.Font,
-	some_number:               int,
-	player_pos:                rl.Vector2,
-	player_texture:            Texture_Name,
-	maggie_pos:                Vec2,
-	maggie_texture:            Texture_Name,
-	test_anim:                 Animation,
-	current_dialog:            Dialog,
-	current_dialog_chain:      ^DialogChainNode,
-	current_dialog_step:       int,
-	current_dialog_frame:      int,
-	current_objective:         Objective,
-	objective_necessary_items: [dynamic]ItemType,
-	cutscene_texture_name:     Texture_Name,
-	story_flag_1:              bool, // investigate campsite
-	story_flag_2:              bool, // fix dads leg
-	story_flag_3:              bool, // make lean two
+	debug_mode:                  bool,
+	game_state:                  Game_State,
+	game_scene:                  Game_Scene,
+	run:                         bool,
+	atlas:                       rl.Texture,
+	music:                       rl.Music,
+	sound_1:                     rl.Sound,
+	font:                        rl.Font,
+	some_number:                 int,
+	player_pos:                  rl.Vector2,
+	player_texture:              Texture_Name,
+	maggie_pos:                  Vec2,
+	maggie_texture:              Texture_Name,
+	test_anim:                   Animation,
+	current_dialog:              Dialog,
+	current_dialog_chain:        ^DialogChainNode,
+	current_dialog_step:         int,
+	current_dialog_frame:        int,
+	current_objective:           Objective,
+	objective_necessary_items:   [dynamic]ItemType,
+	cutscene_texture_name:       Texture_Name,
+	cutscene_pos_1_texture_name: Texture_Name,
+	cutscene_pos_2_texture_name: Texture_Name,
+	story_flag_1:                bool, // investigate campsite
+	story_flag_2:                bool, // fix dads leg
+	story_flag_3:                bool, // make lean two
+	word_timer:                  Timer,
 
 	// Refactor into array
-	screwdriver:               Item,
-	hammer:                    Item,
-	moved_brush:               Item,
-	keys:                      Item,
-	scuffed_moss:              Item,
-	foot_prints_tracks:        Item,
-	car:                       Item,
-	campfire:                  Item,
-	climbing_gear:             Item,
-	bear_mace:                 Item,
-	sturdy_splint:             Item,
-	medical_tape:              Item,
-	phone:                     Item,
-	sturdy_tree_limbs:         Item,
-	rocks:                     Item,
-	paracord:                  Item,
-	blanket:                   Item,
-	lean_two:                  Item,
+	screwdriver:                 Item,
+	hammer:                      Item,
+	moved_brush:                 Item,
+	keys:                        Item,
+	scuffed_moss:                Item,
+	foot_prints_tracks:          Item,
+	car:                         Item,
+	campfire:                    Item,
+	climbing_gear:               Item,
+	bear_mace:                   Item,
+	sturdy_splint:               Item,
+	medical_tape:                Item,
+	phone:                       Item,
+	sturdy_tree_limbs:           Item,
+	rocks:                       Item,
+	paracord:                    Item,
+	blanket:                     Item,
+	lean_two:                    Item,
 
 	// Refactor into array
-	amanda:                    Npc,
-	steve:                     Npc,
-	claire:                    Npc,
-	george:                    Npc,
-	sarah:                     Npc,
-	brian:                     Npc,
-	ida:                       Npc,
+	amanda:                      Npc,
+	steve:                       Npc,
+	claire:                      Npc,
+	george:                      Npc,
+	sarah:                       Npc,
+	brian:                       Npc,
+	ida:                         Npc,
 }
 
 
@@ -256,23 +262,23 @@ DialogMapEnum :: enum {
 
 all_dialog: [DialogMapEnum][]string = {
 	.OPENING_1                = []string {
-		"Becoming a Park Ranger has been one of the most fulfilling jobs I've ever had.",
-		"I've gotten to connect with people and nature like never before in my life.",
-		"Yeah, cleaning the restrooms and picking up garbase sucks...",
+		"Becoming a Park Ranger has been one of the most\n fulfilling jobs I've ever had.",
+		"I've gotten to connect with people and nature\n like never before in my life.",
+		"Yeah, cleaning the restrooms and picking up\n garbase sucks...",
 		"But it brings me joy when people say how clean",
 		"our restrooms are and how beautiful the land is.",
-		"Helping people experience nature is so much more fulfilling than the Software Job I had.",
+		"Helping people experience nature is so\n much more fulfilling than the Software Job I had.",
 		"Wonder what adventure we'll have today?",
 	},
 	.AMANDA_OPEN              = []string {
 		"Hey nooby! Got a big one for you.",
-		"I just met with a mother who says her husband and daughter didn't",
+		"I just met with a mother who says\n her husband and daughter didn't",
 		"come back from their hike yesterday.",
 		"I want you to come check it out with me.",
 		"I've been tasked with being the incident commander.",
-		"We have a volunteer Search & Rescue teams coming to help,",
+		"We have a volunteer Search & Rescue teams\n coming to help,",
 		"But it'll take a bit for them to get here.",
-		"Luckily we have the trail head they were supposed to take.",
+		"Luckily we have the trail head they were\n supposed to take.",
 		"Let's go check it out.",
 	},
 	.AMANDA_1                 = []string {
@@ -285,18 +291,18 @@ all_dialog: [DialogMapEnum][]string = {
 		"Press 'f' to progress or 'x' to continue exploring",
 	},
 	.AMANDA_2                 = []string {
-		"Alright, based on our findings so far, we have a pretty distinct path to see where they went.",
-		"The SAR will fan out, I want you to go East and see what you can find. If you find anything don't hestitate to radio.",
+		"Alright, based on our findings so far, we\n have a pretty distinct path to see where they went.",
+		"The SAR will fan out, I want you to\n go East and see what you can find. If you find anything don't hestitate to radio.",
 	},
 	.YOU_RADIO_CUTSCENE_1     = []string {
-		"Looks like they might be back here. Come this way, I'll keep going",
+		"Looks like they might be back here.\n Come this way, I'll keep going",
 	},
 	.AMANDA_CUTSCENE_1        = []string{"Alright, I'll be on your tail shortly."},
 	.INDISTINGUISH            = []string{"* indistiguishable chatter *"},
 	.YOU_FIND_CUTSCENE_1      = []string{"HELLO?!"},
 	.MAGGIE_FIND_CUTSCENE_1   = []string {
 		"HELLO? IS SOMEONE THERE???",
-		"PLEASE HELP MY DAD IS BADLY HURT. HIS LEG IS BUSTED AND NEEDS ASSITANCE!",
+		"PLEASE HELP MY DAD IS BADLY HURT.\n HIS LEG IS BUSTED AND NEEDS ASSITANCE!",
 	},
 	.YOU_FIND_CUTSCENE_2      = []string{"YES, WE'RE ON OUR WAY"},
 	.STEVE_1                  = []string {
@@ -311,23 +317,23 @@ all_dialog: [DialogMapEnum][]string = {
 	.MAGGIE_1_CUTSCENE        = []string{"I know dad"},
 	.STEVE_5_CUTSCENE         = []string {
 		"Look...",
-		"I'm sorry your mom hasn't been who you want her to be lately...",
+		"I'm sorry your mom hasn't been\n who you want her to be lately...",
 		"People are complicated",
 	},
 	.MAGGIE_2_CUTSCENE        = []string {
-		"Dad! Don't defend her, she voted for this! You see what's hap-",
+		"Dad! Don't defend her, she voted\n for this! You see what's hap-",
 	},
 	.STEVE_6_CUTSCENE         = []string{"Arg!"},
 	.MAGGIE_3_CUTSCENE        = []string {
-		"Sorry, you're in pain. Look, Mom and I aren't on good terms right now.",
-		"I know you love her... I love her too. But, I just can't get past this.",
+		"Sorry, you're in pain. Look, Mom and I\n aren't on good terms right now.",
+		"I know you love her... I love her too.\n But, I just can't get past this.",
 		"It just feels like a betrayal of who she is.",
 		"Who y'all have taught me to be.",
 	},
 	.STEVE_7_CUTSCENE         = []string {
 		"I know... I'm sorry...",
 		"Let's get some rest.",
-		"If we don't hear anything tomorrow, you might need to leave and go get help.",
+		"If we don't hear anything tomorrow,\n you might need to leave and go get help.",
 	},
 	.MAGGIE_4_CUTSCENE        = []string{"I'm not gonna just leave you-"},
 	.STEVE_8_CUTSCENE         = []string{"Maggie...Please..."},
@@ -340,26 +346,26 @@ all_dialog: [DialogMapEnum][]string = {
 	.ENDING_1                 = []string{"Fin."},
 	.ENDING_CUTSCENE_AMANDA_1 = []string {
 		"Great job keeping your cool out there.",
-		"That was pretty scary. I'm just happy we found them!",
+		"That was pretty scary. I'm\n just happy we found them!",
 		"How are you feeling?",
 	},
 	.ENDING_CUTSCENE_YOU_1    = []string {
 		"Alright I guess...",
-		"It was really nice seeing a father/daughter together bonding, even in trauma.",
+		"It was really nice seeing a father/daughter\n together bonding, even in trauma.",
 		"They're there for each other you know?",
 		"Gives me hope.",
 	},
 	.ENDING_CUTSCENE_AMANDA_2 = []string{"Yeah? Your family been... On the koolaid too?"},
 	.ENDING_CUTSCENE_YOU_2    = []string{"Yeah..."},
 	.ENDING_CUTSCENE_AMANDA_3 = []string {
-		"I'm sorry. Well, we're your family too. We look out for each other",
+		"I'm sorry. Well, we're your family too.\n We look out for each other",
 	},
 	.ENDING_CUTSCENE_YOU_3    = []string {
-		"Thanks. I know. This has been the right place at the right time.",
+		"Thanks. I know. This has been the right\n place at the right time.",
 	},
 	.OBJECTIVE_1_COMPLETE     = []string {
 		"You've found enough clues for now.",
-		"Let's wait for the Search & Rescue team to arrive",
+		"Let's wait for the Search & Rescue\n team to arrive",
 		"Talk to Amanda to Progress the Story.",
 	},
 	.OBJECTIVE_2_COMPLETE     = []string{"Go treat your dad's leg."},
@@ -540,7 +546,7 @@ Tasks :: enum {
 
 item_collection_tasks: [Tasks][]ItemType = {
 	.NONE   = []ItemType{},
-	.TASK_1 = []ItemType{ItemType.SCREWDRIVER, ItemType.HAMMER},
+	.TASK_1 = []ItemType{ItemType.CAMPFIRE, ItemType.MOVED_BRUSH, ItemType.CAR, ItemType.KEYS},
 	.TASK_2 = []ItemType{ItemType.STURDY_SPLINT, ItemType.MEDICAL_TAPE},
 	.TASK_3 = []ItemType {
 		ItemType.STURDY_TREE_LIMBS,
@@ -551,6 +557,23 @@ item_collection_tasks: [Tasks][]ItemType = {
 	.TASK_5 = []ItemType{ItemType.BEAR_MACE},
 }
 
+Timer :: struct {
+	current_time: f32,
+	timeout_time: f32,
+}
+
+reset_timer :: proc(timer: ^Timer) {
+	timer.current_time = 0.0
+}
+
+check_timeout :: proc(timer: Timer) -> bool {
+	return timer.current_time >= timer.timeout_time
+}
+
+run_timer :: proc(timer: ^Timer, dt: f32) {
+	timer.current_time += dt
+}
+
 game_camera :: proc(target_pos: Vec2) -> rl.Camera2D {
 	w := f32(rl.GetScreenWidth())
 	h := f32(rl.GetScreenHeight())
@@ -558,9 +581,14 @@ game_camera :: proc(target_pos: Vec2) -> rl.Camera2D {
 	return {zoom = h / PIXEL_WINDOW_HEIGHT, target = target_pos, offset = {w / 2, h / 2}}
 }
 
-cutscene_camera :: proc() -> rl.Camera2D {
+title_camera :: proc() -> rl.Camera2D {
 	h := f32(rl.GetScreenHeight())
 	return {zoom = h / (PIXEL_WINDOW_HEIGHT)}
+}
+
+cutscene_camera :: proc() -> rl.Camera2D {
+	h := f32(rl.GetScreenHeight())
+	return {zoom = h / (PIXEL_WINDOW_HEIGHT / 2)}
 }
 
 ui_camera :: proc() -> rl.Camera2D {
@@ -655,7 +683,11 @@ player_update :: proc(dt: f32, player_pos: ^Vec2) {
 }
 
 handle_item_interaction :: proc(item: ^Item, c: proc()) {
-	item.in_range = (collide_with_item(item^, g.player_pos) && !item.collected)
+	if g.game_scene == .SCENE_2 {
+		item.in_range = (collide_with_item(item^, g.maggie_pos) && !item.collected)
+	} else {
+		item.in_range = (collide_with_item(item^, g.player_pos) && !item.collected)
+	}
 	if item.in_range {
 		if rl.IsKeyPressed(.E) {
 			c()
@@ -803,7 +835,7 @@ handle_npc_interactions :: proc() {
 			}
 		}
 	case .SCENE_2:
-		g.steve.in_range = collide_with_npc(g.steve, g.player_pos)
+		g.steve.in_range = collide_with_npc(g.steve, g.maggie_pos)
 		if g.steve.in_range {
 			if rl.IsKeyPressed(.E) {
 				if g.story_flag_2 {
@@ -821,12 +853,12 @@ handle_npc_interactions :: proc() {
 				}
 			}
 		}
-		g.claire.in_range = collide_with_npc(g.claire, g.player_pos)
-		if g.claire.in_range {
-			if rl.IsKeyPressed(.E) {
-				handle_dialog(.CLAIRE, .CLAIRE_1)
-			}
-		}
+	// g.claire.in_range = collide_with_npc(g.claire, g.player_pos)
+	// if g.claire.in_range {
+	// 	if rl.IsKeyPressed(.E) {
+	// 		handle_dialog(.CLAIRE, .CLAIRE_1)
+	// 	}
+	// }
 	case .SCENE_3:
 		g.amanda.in_range = collide_with_npc(g.amanda, g.player_pos)
 		if g.amanda.in_range {
@@ -910,7 +942,8 @@ update :: proc(dt: f32) {
 		if g.current_dialog.dialog_enum == .LEAN_TWO_ITEM {
 			if rl.IsKeyPressed(.F) {
 				g.game_scene = .CUTSCENE
-				g.cutscene_texture_name = .Cutscene_1
+				g.cutscene_pos_1_texture_name = .Maggie
+				g.cutscene_pos_2_texture_name = .Steve
 				g.current_dialog_chain = &dc_steve_maggie_1
 				g.current_dialog_chain = handle_dialog_chain(g.current_dialog_chain)
 			}
@@ -921,19 +954,24 @@ update :: proc(dt: f32) {
 
 		if g.current_dialog.dialog_enum == .OBJECTIVE_5_COMPLETE {
 			g.game_scene = .CUTSCENE
-			g.cutscene_texture_name = .Cutscene_1
+			// g.cutscene_texture_name = .Cutscene_1
+			g.cutscene_pos_1_texture_name = .Ranger_Base
+			g.cutscene_pos_2_texture_name = .Maggie
 			g.current_dialog_chain = &dc_find_1
 			g.current_dialog_chain = handle_dialog_chain(g.current_dialog_chain)
 		}
 
 		if g.current_dialog.dialog_enum == .YOU_FIND_CUTSCENE_2 {
 			g.game_scene = .CUTSCENE
-			g.cutscene_texture_name = .Cutscene_1
+			// g.cutscene_texture_name = .Cutscene_1
+			g.cutscene_pos_1_texture_name = .Ranger_Base
+			g.cutscene_pos_2_texture_name = .Amanda
 			g.current_dialog_chain = &dc_ending_1
 			g.current_dialog_chain = handle_dialog_chain(g.current_dialog_chain)
 		}
 
 		if rl.IsKeyPressed(.E) {
+			rl.PlaySound(g.sound_1)
 			// continue dialogue
 			g.current_dialog_frame = 0
 			if g.current_dialog_step >= (size - 1) {
@@ -1003,7 +1041,7 @@ update :: proc(dt: f32) {
 			}
 		}
 
-		if rl.IsKeyPressed(.T) {
+		if rl.IsKeyPressed(.R) {
 			g.current_objective.complete = check_items()
 			if g.current_objective.complete {
 				handle_dialog(.OBJECTIVE, g.current_objective.dialog_completion)
@@ -1017,7 +1055,11 @@ update :: proc(dt: f32) {
 		// animation_update(&g.test_anim, rl.GetFrameTime())
 
 		input = linalg.normalize0(input)
-		player_update(dt, &g.player_pos)
+		if g.game_scene == .SCENE_2 {
+			player_update(dt, &g.maggie_pos)
+		} else {
+			player_update(dt, &g.player_pos)
+		}
 
 		handle_item_interactions()
 		handle_npc_interactions()
@@ -1144,7 +1186,7 @@ check_items :: proc() -> bool {
 
 // Draw Data
 draw_item :: proc(item: Item) {
-	if item.collected {
+	if item.collected && !item.visible_on_collection {
 		return
 	}
 	if item.texture_name != .None {
@@ -1216,6 +1258,7 @@ draw :: proc(dt: f32) {
 	rl.BeginDrawing()
 	rl.ClearBackground(rl.BLACK)
 
+
 	// test animation
 	// anim_texture := animation_atlas_texture(g.test_anim)
 	// test_anim_rect := anim_texture.rect
@@ -1247,13 +1290,8 @@ draw :: proc(dt: f32) {
 		rl.DrawTextureRec(g.atlas, player_rect, g.player_pos, rl.WHITE)
 		rl.EndMode2D()
 	case .SCENE_2:
-		rl.BeginMode2D(game_camera(g.player_pos))
-		background_rec := atlas_textures[Texture_Name.Tree_Background].rect
-		rl.DrawTextureRec(g.atlas, background_rec, Vec2{0., 0.}, rl.WHITE)
-		rl.DrawTextureRec(g.atlas, background_rec, Vec2{-320., -180.}, rl.WHITE)
-		rl.DrawTextureRec(g.atlas, background_rec, Vec2{-320., 0.}, rl.WHITE)
-		rl.DrawTextureRec(g.atlas, background_rec, Vec2{-320., 180.}, rl.WHITE)
-		rl.DrawTextureRec(g.atlas, background_rec, Vec2{-320., 360.}, rl.WHITE)
+		rl.BeginMode2D(game_camera(g.maggie_pos))
+		draw_background()
 		draw_tiles_two()
 		draw_trees_two()
 		draw_item(g.sturdy_splint)
@@ -1265,18 +1303,12 @@ draw :: proc(dt: f32) {
 		draw_item(g.blanket)
 		draw_item(g.lean_two)
 		draw_npc(g.steve)
-		draw_npc(g.claire)
-		player_rect := atlas_textures[Texture_Name.Ranger_Base].rect
-		rl.DrawTextureRec(g.atlas, player_rect, g.player_pos, rl.WHITE)
+		maggie_rect := atlas_textures[Texture_Name.Maggie].rect
+		rl.DrawTextureRec(g.atlas, maggie_rect, g.maggie_pos, rl.WHITE)
 		rl.EndMode2D()
 	case .SCENE_3:
 		rl.BeginMode2D(game_camera(g.player_pos))
-		background_rec := atlas_textures[Texture_Name.Tree_Background].rect
-		rl.DrawTextureRec(g.atlas, background_rec, Vec2{0., 0.}, rl.WHITE)
-		rl.DrawTextureRec(g.atlas, background_rec, Vec2{-320., -180.}, rl.WHITE)
-		rl.DrawTextureRec(g.atlas, background_rec, Vec2{-320., 0.}, rl.WHITE)
-		rl.DrawTextureRec(g.atlas, background_rec, Vec2{-320., 180.}, rl.WHITE)
-		rl.DrawTextureRec(g.atlas, background_rec, Vec2{-320., 360.}, rl.WHITE)
+		draw_background()
 		draw_tiles()
 		draw_trees()
 		draw_item(g.scuffed_moss)
@@ -1291,7 +1323,8 @@ draw :: proc(dt: f32) {
 		rl.EndMode2D()
 	case .CUTSCENE:
 		rl.BeginMode2D(cutscene_camera())
-		draw_cutscene(g.cutscene_texture_name)
+		draw_cutscene_tiles()
+		draw_npc_cutscene_tiles(g.cutscene_pos_1_texture_name, g.cutscene_pos_2_texture_name)
 		rl.EndMode2D()
 	case .ENDING:
 		rl.BeginMode2D(cutscene_camera())
@@ -1306,7 +1339,7 @@ draw :: proc(dt: f32) {
 		)
 		rl.EndMode2D()
 	case .TITLE:
-		rl.BeginMode2D(cutscene_camera())
+		rl.BeginMode2D(title_camera())
 		// Draw title cutscene
 		draw_cutscene(g.cutscene_texture_name)
 		txt := fmt.ctprintf("Press Enter to Start")
@@ -1319,11 +1352,8 @@ draw :: proc(dt: f32) {
 			rl.WHITE,
 		)
 		rl.EndMode2D()
-	// case .INTRO:
-	// 	rl.BeginMode2D(cutscene_camera())
-	// 	draw_cutscene(g.cutscene_texture_name)
-	// 	rl.EndMode2D()
 	}
+
 
 	// rl.DrawTexturePro(g.atlas, test_anim_rect, dest, origin, 0, rl.WHITE)
 	// rl.DrawTextureEx(g.player_texture, g.player_pos, 0, 1, rl.WHITE)
@@ -1462,32 +1492,6 @@ draw_tiles :: proc() {
 	}
 }
 
-draw_tiles_new :: proc() {
-	for i in 0 ..< GRID_SIZE_NEW {
-		for j in 0 ..< GRID_SIZE_NEW {
-			x := i32(i * CELL_SIZE)
-			y := i32(j * CELL_SIZE)
-			tile := grid_copy_new[j][i]
-			tile_pos := get_tileset_pos(tile)
-			draw_tile(tile_pos.x, tile_pos.y, {f32(x), f32(y)}, false)
-			rl.DrawRectangleLines(x, y, CELL_SIZE, CELL_SIZE, rl.DARKGRAY)
-		}
-	}
-}
-draw_trees_new :: proc() {
-	for i in 0 ..< GRID_SIZE_NEW {
-		for j in 0 ..< GRID_SIZE_NEW {
-			x := i32(i * CELL_SIZE)
-			y := i32(j * CELL_SIZE)
-			tile := grid_copy_new[j][i]
-			if tile == .TWL {
-				tree := atlas_textures[.Tree_3]
-				rl.DrawTextureRec(g.atlas, tree.rect, {f32(x), f32(y)}, rl.WHITE)
-			}
-		}
-	}
-}
-
 draw_tiles_two :: proc() {
 	for i in 0 ..< GRID_SIZE {
 		for j in 0 ..< GRID_SIZE {
@@ -1499,6 +1503,39 @@ draw_tiles_two :: proc() {
 			rl.DrawRectangleLines(x, y, CELL_SIZE, CELL_SIZE, rl.DARKGRAY)
 		}
 	}
+}
+
+draw_cutscene_tiles :: proc() {
+	for i in 0 ..< GRID_SIZE_CUT {
+		for j in 0 ..< GRID_SIZE_CUT {
+			x := i32(i * CELL_SIZE)
+			y := i32(j * CELL_SIZE)
+			tile := grid_cutscene[j][i]
+			tile_pos := get_tileset_pos(tile)
+			draw_tile(tile_pos.x, tile_pos.y, {f32(x), f32(y)}, false)
+		}
+	}
+}
+
+draw_npc_cutscene_tiles :: proc(left: Texture_Name, right: Texture_Name) -> Vec2 {
+	for i in 0 ..< GRID_SIZE_CUT {
+		for j in 0 ..< GRID_SIZE_CUT {
+			x := i32(i * CELL_SIZE)
+			y := i32(j * CELL_SIZE)
+			tile := grid_place[j][i]
+			if tile == .YOU {
+				texture := atlas_textures[left]
+				texture.rect.width = -texture.rect.width
+				rl.DrawTextureRec(g.atlas, texture.rect, {f32(x), f32(y)}, rl.WHITE)
+			}
+			if tile == .AMANDA {
+				texture := atlas_textures[right]
+				rl.DrawTextureRec(g.atlas, texture.rect, {f32(x), f32(y)}, rl.WHITE)
+				return Vec2{f32(x), f32(y)}
+			}
+		}
+	}
+	return Vec2{0., 0.}
 }
 
 draw_trees :: proc() {
@@ -1568,7 +1605,44 @@ place_items :: proc() {
 				move_item(&g.paracord, x, y)
 			case .BNK:
 				move_item(&g.blanket, x, y)
+			case .LTW:
+				move_item(&g.lean_two, x, y)
 			case .NON:
+			}
+		}
+	}
+}
+
+place_characters :: proc() {
+	for i in 0 ..< GRID_SIZE {
+		for j in 0 ..< GRID_SIZE {
+			x := i32(i * CELL_SIZE)
+			y := i32(j * CELL_SIZE)
+			npc_enum := npc_grid[j][i]
+			switch npc_enum {
+			case .YOU:
+				g.player_pos.x = f32(x)
+				g.player_pos.y = f32(y)
+			case .AMANDA:
+				g.amanda.pos.x = f32(x)
+				g.amanda.pos.y = f32(y)
+				g.amanda.rect.x = f32(x)
+				g.amanda.rect.y = f32(y)
+			case .STEVE:
+				g.steve.pos.x = f32(x)
+				g.steve.pos.y = f32(y)
+				g.steve.rect.x = f32(x)
+				g.steve.rect.y = f32(y)
+			case .MAGGIE:
+				g.maggie_pos.x = f32(x)
+				g.maggie_pos.y = f32(y)
+			case .CLAIRE:
+			case .GEORGE:
+			case .SARAH:
+			case .BRIAN:
+			case .OBJECTIVE:
+			case .IDA:
+			case .ITEM:
 			}
 		}
 	}
@@ -1582,6 +1656,7 @@ move_item :: proc(item: ^Item, x, y: i32) {
 
 @(export)
 game_update :: proc() {
+	rl.UpdateMusicStream(g.music)
 	deltaTime := rl.GetFrameTime()
 	update(deltaTime)
 	draw(deltaTime)
@@ -1594,6 +1669,7 @@ game_update :: proc() {
 game_init_window :: proc() {
 	rl.SetConfigFlags({.WINDOW_RESIZABLE, .VSYNC_HINT})
 	rl.InitWindow(1280, 720, "Odin + Raylib + Hot Reload template!")
+	rl.InitAudioDevice()
 	// rl.SetWindowPosition(200, 200)
 	rl.SetTargetFPS(500)
 	rl.SetExitKey(nil)
@@ -1605,20 +1681,22 @@ game_init :: proc() {
 	g = new(Game_Memory)
 
 	g^ = Game_Memory {
-		debug_mode                = true,
-		game_state                = .MAIN,
-		game_scene                = .TITLE,
-		run                       = true,
-		some_number               = 100,
-		current_dialog_chain      = nil,
-		cutscene_texture_name     = .Cutscene_1,
-		player_pos                = rl.Vector2{100., 100.},
+		debug_mode                  = true,
+		game_state                  = .MAIN,
+		game_scene                  = .TITLE,
+		run                         = true,
+		some_number                 = 100,
+		current_dialog_chain        = nil,
+		cutscene_texture_name       = .Cutscene_1,
+		player_pos                  = rl.Vector2{100., 100.},
 
 		// You can put textures, sounds and music in the `assets` folder. Those
 		// files will be part any release or web build.
-		atlas                     = rl.LoadTextureFromImage(atlas_image),
-		test_anim                 = animation_create(.Test),
-		current_dialog            = Dialog {
+		atlas                       = rl.LoadTextureFromImage(atlas_image),
+		music                       = rl.LoadMusicStream("assets/Mixdown - 09 s_hub_music.ogg"),
+		sound_1                     = rl.LoadSound("assets/s_interact_1.wav"),
+		test_anim                   = animation_create(.Test),
+		current_dialog              = Dialog {
 			1,
 			.AMANDA,
 			.Amanda,
@@ -1626,17 +1704,20 @@ game_init :: proc() {
 			load_dialog(.AMANDA_1),
 			.AMANDA_1,
 		},
-		current_dialog_step       = 0,
-		current_dialog_frame      = 0,
-		current_objective         = Objective{false, .OBJECTIVE_1_COMPLETE},
-		objective_necessary_items = load_task(.TASK_1),
-		story_flag_1              = false,
-		story_flag_2              = false,
-		story_flag_3              = false,
+		current_dialog_step         = 0,
+		current_dialog_frame        = 0,
+		current_objective           = Objective{false, .OBJECTIVE_1_COMPLETE},
+		objective_necessary_items   = load_task(.TASK_1),
+		story_flag_1                = false,
+		story_flag_2                = false,
+		story_flag_3                = false,
+		word_timer                  = Timer{0., 2.},
+		cutscene_pos_1_texture_name = .Ranger_Base,
+		cutscene_pos_2_texture_name = .Amanda,
 
 
 		// World Items
-		screwdriver               = Item {
+		screwdriver                 = Item {
 			Vec2{10., 10.},
 			Rect{10., 10., 16., 16.},
 			"Screwdriver",
@@ -1644,8 +1725,9 @@ game_init :: proc() {
 			false,
 			false,
 			"screwdriver",
+			false,
 		},
-		hammer                    = Item {
+		hammer                      = Item {
 			Vec2{20., 30.},
 			Rect{20., 30., 16., 16.},
 			"hammer",
@@ -1653,17 +1735,19 @@ game_init :: proc() {
 			false,
 			false,
 			"hammer",
+			false,
 		},
-		moved_brush               = Item {
+		moved_brush                 = Item {
 			Vec2{30., 10.},
 			Rect{30., 10., 16., 16.},
 			"Disturbed Brush",
-			.Test0,
+			.Broken_Branches,
 			false,
 			false,
 			"Found Disturbed Brush",
+			true,
 		},
-		keys                      = Item {
+		keys                        = Item {
 			Vec2{50., 10.},
 			Rect{50., 10., 16., 16.},
 			"Car Keys",
@@ -1671,35 +1755,39 @@ game_init :: proc() {
 			false,
 			false,
 			"Found these keys",
+			false,
 		},
-		scuffed_moss              = Item {
+		scuffed_moss                = Item {
 			Vec2{60., 10.},
 			Rect{60., 10., 16., 16.},
 			"Disturbed Moss",
-			.Test0,
+			.Moss_Log,
 			false,
 			false,
 			"Log's moss been disturbed",
+			true,
 		},
-		foot_prints_tracks        = Item {
+		foot_prints_tracks          = Item {
 			Vec2{70., 10.},
 			Rect{70., 10., 16., 16.},
 			"Footprints",
-			.Test0,
+			.Footprints,
 			false,
 			false,
 			"Two sets of foot prints",
+			true,
 		},
-		car                       = Item {
+		car                         = Item {
 			Vec2{80., 10.},
 			Rect{80., 10., 16., 16.},
 			"Truck",
-			.Test0,
+			.Truck,
 			false,
 			false,
 			"The Truck has been here for days",
+			true,
 		},
-		campfire                  = Item {
+		campfire                    = Item {
 			Vec2{90., 10.},
 			Rect{90., 10., 16., 16.},
 			"Campfire",
@@ -1707,8 +1795,9 @@ game_init :: proc() {
 			false,
 			false,
 			"A campfire has been out for days",
+			true,
 		},
-		climbing_gear             = Item {
+		climbing_gear               = Item {
 			Vec2{100., 10.},
 			Rect{100., 10., 16., 16.},
 			"Climbing Gear",
@@ -1716,8 +1805,9 @@ game_init :: proc() {
 			false,
 			false,
 			"Climbing gear they were mountaineers",
+			true,
 		},
-		bear_mace                 = Item {
+		bear_mace                   = Item {
 			Vec2{10., 30.},
 			Rect{10., 30., 16., 16.},
 			"Bear Mace",
@@ -1725,8 +1815,9 @@ game_init :: proc() {
 			false,
 			false,
 			"Probably used to fend off an attacker",
+			false,
 		},
-		sturdy_splint             = Item {
+		sturdy_splint               = Item {
 			Vec2{30., 30.},
 			Rect{30., 30., 16., 16.},
 			"Sturdy Splint",
@@ -1734,8 +1825,9 @@ game_init :: proc() {
 			false,
 			false,
 			"Can use to help dad",
+			false,
 		},
-		medical_tape              = Item {
+		medical_tape                = Item {
 			Vec2{50., 30.},
 			Rect{50., 30., 16., 16.},
 			"Medical Tape",
@@ -1743,8 +1835,9 @@ game_init :: proc() {
 			false,
 			false,
 			"Can use to help dad",
+			false,
 		},
-		phone                     = Item {
+		phone                       = Item {
 			Vec2{70., 30.},
 			Rect{70., 30., 16., 16.},
 			"Phone",
@@ -1752,17 +1845,19 @@ game_init :: proc() {
 			false,
 			false,
 			"It's dead",
+			false,
 		},
-		sturdy_tree_limbs         = Item {
+		sturdy_tree_limbs           = Item {
 			Vec2{90., 30.},
 			Rect{90., 30., 16., 16.},
 			"Tree Limbs",
-			.Test0,
+			.Tree_Limbs,
 			false,
 			false,
 			"Can use to make lean two",
+			false,
 		},
-		rocks                     = Item {
+		rocks                       = Item {
 			Vec2{100., 30.},
 			Rect{100., 30., 16., 16.},
 			"Rocks",
@@ -1770,8 +1865,9 @@ game_init :: proc() {
 			false,
 			false,
 			"Can use to make lean two",
+			false,
 		},
-		paracord                  = Item {
+		paracord                    = Item {
 			Vec2{120., 30.},
 			Rect{120., 30., 16., 16.},
 			"paracord",
@@ -1779,8 +1875,9 @@ game_init :: proc() {
 			false,
 			false,
 			"Can use to make lean two",
+			false,
 		},
-		blanket                   = Item {
+		blanket                     = Item {
 			Vec2{140., 30.},
 			Rect{140., 30., 16., 16.},
 			"blanket",
@@ -1788,20 +1885,21 @@ game_init :: proc() {
 			false,
 			false,
 			"Can use to make lean two",
+			false,
 		},
-		lean_two                  = Item {
+		lean_two                    = Item {
 			Vec2{140., 30.},
-			Rect{140., 30., 16., 16.},
+			Rect{140., 30., 32., 32.},
 			"Lean Two",
-			.Test0,
+			.Lean_Two,
 			false,
 			true,
 			"",
+			false,
 		},
 
-
 		// NPCs
-		amanda                    = Npc {
+		amanda                      = Npc {
 			.AMANDA,
 			Vec2{14., 100.},
 			Rect{14., 100., 16., 16.},
@@ -1811,7 +1909,7 @@ game_init :: proc() {
 			false,
 			false,
 		},
-		steve                     = Npc {
+		steve                       = Npc {
 			.STEVE,
 			Vec2{34., 100.},
 			Rect{34., 100., 16., 16.},
@@ -1821,7 +1919,7 @@ game_init :: proc() {
 			false,
 			false,
 		},
-		claire                    = Npc {
+		claire                      = Npc {
 			.CLAIRE,
 			Vec2{54., 100.},
 			Rect{54., 100., 16., 16.},
@@ -1831,7 +1929,7 @@ game_init :: proc() {
 			false,
 			false,
 		},
-		george                    = Npc {
+		george                      = Npc {
 			.GEORGE,
 			Vec2{74., 100.},
 			Rect{74., 100., 16., 16.},
@@ -1841,7 +1939,7 @@ game_init :: proc() {
 			false,
 			false,
 		},
-		sarah                     = Npc {
+		sarah                       = Npc {
 			.SARAH,
 			Vec2{94., 100.},
 			Rect{94., 100., 16., 16.},
@@ -1851,7 +1949,7 @@ game_init :: proc() {
 			false,
 			false,
 		},
-		brian                     = Npc {
+		brian                       = Npc {
 			.BRIAN,
 			Vec2{114., 100.},
 			Rect{114., 100., 16., 16.},
@@ -1861,7 +1959,7 @@ game_init :: proc() {
 			false,
 			false,
 		},
-		ida                       = Npc {
+		ida                         = Npc {
 			.IDA,
 			Vec2{134., 100.},
 			Rect{134., 100., 16., 16.},
@@ -1873,7 +1971,9 @@ game_init :: proc() {
 		},
 	}
 	place_items()
+	place_characters()
 	rl.UnloadImage(atlas_image)
+	rl.PlayMusicStream(g.music)
 
 	game_hot_reloaded(g)
 }
@@ -1893,6 +1993,9 @@ game_should_run :: proc() -> bool {
 @(export)
 game_shutdown :: proc() {
 	rl.UnloadTexture(g.atlas)
+	rl.UnloadMusicStream(g.music)
+	rl.UnloadSound(g.sound_1)
+	rl.CloseAudioDevice()
 	delete(g.current_dialog.dialog_text)
 	delete(g.objective_necessary_items)
 	free(g)
