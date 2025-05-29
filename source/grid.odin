@@ -195,6 +195,7 @@ GRID_ITEM_ENUM :: enum {
 	ROK,
 	PRC,
 	BNK,
+	SPL,
 	LTW,
 }
 
@@ -204,11 +205,11 @@ item_grid := [GRID_SIZE][GRID_SIZE]GRID_ITEM_ENUM {
 	{ .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON },
 	{ .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON },
 	{ .NON, .NON, .NON, .NON, .BNK, .PHN, .CLG, .MTP, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON },
-	{ .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .BRS, .NON, .NON },
+	{ .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .ROK, .NON, .NON, .NON, .NON, .NON, .NON, .BRS, .NON, .NON },
 	{ .NON, .NON, .NON, .NON, .NON, .NON, .TRL, .NON, .LTW, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON },
 	{ .NON, .NON, .NON, .NON, .NON, .FIR, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .MOS, .FTP, .NON, .NON },
 	{ .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON },
-	{ .NON, .NON, .NON, .NON, .KEY, .NON, .NON, .NON, .ROK, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON },
+	{ .NON, .NON, .NON, .NON, .KEY, .NON, .NON, .NON, .NON, .NON, .SPL, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON },
 	{ .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .BRM, .NON, .NON, .NON, .NON, .NON },
 	{ .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON },
 	{ .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .PRC, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON, .NON },

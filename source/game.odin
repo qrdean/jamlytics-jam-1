@@ -135,6 +135,8 @@ Objective :: struct {
 	dialog_completion: DialogMapEnum,
 }
 
+CUTSCENE_TRANSITION_TIME :: 2.
+
 Game_Memory :: struct {
 	debug_mode:                  bool,
 	game_state:                  Game_State,
@@ -162,6 +164,8 @@ Game_Memory :: struct {
 	story_flag_1:                bool, // investigate campsite
 	story_flag_2:                bool, // fix dads leg
 	story_flag_3:                bool, // make lean two
+	cutscene_transition_timer:   f32,
+	cutscene_overlay_txt:        string,
 	word_timer:                  Timer,
 
 	// Refactor into array
@@ -942,6 +946,8 @@ update :: proc(dt: f32) {
 		if g.current_dialog.dialog_enum == .LEAN_TWO_ITEM {
 			if rl.IsKeyPressed(.F) {
 				g.game_scene = .CUTSCENE
+				g.cutscene_transition_timer = 0.
+				g.cutscene_overlay_txt = "LATER..."
 				g.cutscene_pos_1_texture_name = .Maggie
 				g.cutscene_pos_2_texture_name = .Steve
 				g.current_dialog_chain = &dc_steve_maggie_1
@@ -955,6 +961,8 @@ update :: proc(dt: f32) {
 		if g.current_dialog.dialog_enum == .OBJECTIVE_5_COMPLETE {
 			g.game_scene = .CUTSCENE
 			// g.cutscene_texture_name = .Cutscene_1
+			g.cutscene_transition_timer = 0.
+			g.cutscene_overlay_txt = "THE RANGERS\nFOLLOW THE CLUES"
 			g.cutscene_pos_1_texture_name = .Ranger_Base
 			g.cutscene_pos_2_texture_name = .Maggie
 			g.current_dialog_chain = &dc_find_1
@@ -964,40 +972,45 @@ update :: proc(dt: f32) {
 		if g.current_dialog.dialog_enum == .YOU_FIND_CUTSCENE_2 {
 			g.game_scene = .CUTSCENE
 			// g.cutscene_texture_name = .Cutscene_1
+			g.cutscene_transition_timer = 0.
+			g.cutscene_overlay_txt = "LATER AFTER\nEVERYONE IS SAFE"
 			g.cutscene_pos_1_texture_name = .Ranger_Base
 			g.cutscene_pos_2_texture_name = .Amanda
 			g.current_dialog_chain = &dc_ending_1
 			g.current_dialog_chain = handle_dialog_chain(g.current_dialog_chain)
 		}
 
-		if rl.IsKeyPressed(.E) {
-			rl.PlaySound(g.sound_1)
-			// continue dialogue
-			g.current_dialog_frame = 0
-			if g.current_dialog_step >= (size - 1) {
-				if g.current_dialog.dialog_enum == .AMANDA_OPEN {
-					g.game_scene = .SCENE_1
-				}
-				if g.current_dialog.dialog_enum == .MAGGIE_5_CUTSCENE {
-					g.current_objective.complete = false
-					g.current_objective.dialog_completion = .OBJECTIVE_5_COMPLETE
-					g.objective_necessary_items = load_task(.TASK_5)
-					g.game_scene = .SCENE_3
-				}
-				if g.current_dialog.dialog_enum == .ENDING_CUTSCENE_YOU_3 {
-					g.current_objective.complete = false
-					g.game_scene = .ENDING
-				}
-				if g.current_dialog_chain != nil {
-					g.current_dialog_chain = handle_dialog_chain(g.current_dialog_chain)
+
+		if g.cutscene_transition_timer > CUTSCENE_TRANSITION_TIME {
+			if rl.IsKeyPressed(.E) {
+				rl.PlaySound(g.sound_1)
+				// continue dialogue
+				g.current_dialog_frame = 0
+				if g.current_dialog_step >= (size - 1) {
+					if g.current_dialog.dialog_enum == .AMANDA_OPEN {
+						g.game_scene = .SCENE_1
+					}
+					if g.current_dialog.dialog_enum == .MAGGIE_5_CUTSCENE {
+						g.current_objective.complete = false
+						g.current_objective.dialog_completion = .OBJECTIVE_5_COMPLETE
+						g.objective_necessary_items = load_task(.TASK_5)
+						g.game_scene = .SCENE_3
+					}
+					if g.current_dialog.dialog_enum == .ENDING_CUTSCENE_YOU_3 {
+						g.current_objective.complete = false
+						g.game_scene = .ENDING
+					}
+					if g.current_dialog_chain != nil {
+						g.current_dialog_chain = handle_dialog_chain(g.current_dialog_chain)
+					} else {
+						g.game_state = .MAIN
+					}
 				} else {
-					g.game_state = .MAIN
+					g.current_dialog_step += 1
 				}
-			} else {
-				g.current_dialog_step += 1
 			}
+			g.current_dialog_frame += 2
 		}
-		g.current_dialog_frame += 2
 	case .INVENTORY:
 		if rl.IsKeyPressed(.Q) {
 			g.game_state = .MAIN
@@ -1278,8 +1291,8 @@ draw :: proc(dt: f32) {
 		draw_background()
 		draw_tiles()
 		draw_trees()
-		draw_item(g.screwdriver)
-		draw_item(g.hammer)
+		// draw_item(g.screwdriver)
+		// draw_item(g.hammer)
 		draw_item(g.moved_brush)
 		draw_item(g.keys)
 		draw_item(g.car)
@@ -1325,9 +1338,21 @@ draw :: proc(dt: f32) {
 		rl.BeginMode2D(cutscene_camera())
 		draw_cutscene_tiles()
 		draw_npc_cutscene_tiles(g.cutscene_pos_1_texture_name, g.cutscene_pos_2_texture_name)
+		if g.cutscene_transition_timer < CUTSCENE_TRANSITION_TIME {
+			rl.DrawRectangleV(Vec2{0., 0.}, Vec2{1280., 720.}, rl.BLACK)
+			rl.DrawTextEx(
+				g.font,
+				fmt.ctprintf("%v", g.cutscene_overlay_txt),
+				Vec2{PIXEL_WINDOW_HEIGHT / 4, PIXEL_WINDOW_HEIGHT / 4},
+				8,
+				1,
+				rl.WHITE,
+			)
+		}
+		g.cutscene_transition_timer += dt
 		rl.EndMode2D()
 	case .ENDING:
-		rl.BeginMode2D(cutscene_camera())
+		rl.BeginMode2D(title_camera())
 		txt := fmt.ctprintf("FIN")
 		rl.DrawTextEx(
 			g.font,
@@ -1383,7 +1408,9 @@ draw :: proc(dt: f32) {
 	// )
 
 	if g.game_state == .DIALOGUE {
-		draw_dialog(g.current_dialog, g.current_dialog_step, g.current_dialog_frame)
+		if g.cutscene_transition_timer > CUTSCENE_TRANSITION_TIME {
+			draw_dialog(g.current_dialog, g.current_dialog_step, g.current_dialog_frame)
+		}
 	}
 
 	if g.game_state == .INVENTORY {
@@ -1605,6 +1632,8 @@ place_items :: proc() {
 				move_item(&g.paracord, x, y)
 			case .BNK:
 				move_item(&g.blanket, x, y)
+			case .SPL:
+				move_item(&g.sturdy_splint, x, y)
 			case .LTW:
 				move_item(&g.lean_two, x, y)
 			case .NON:
@@ -1714,6 +1743,7 @@ game_init :: proc() {
 		word_timer                  = Timer{0., 2.},
 		cutscene_pos_1_texture_name = .Ranger_Base,
 		cutscene_pos_2_texture_name = .Amanda,
+		cutscene_overlay_txt        = "...",
 
 
 		// World Items
