@@ -1032,21 +1032,21 @@ update :: proc(dt: f32) {
 		if rl.IsKeyDown(.RIGHT) || rl.IsKeyDown(.D) {
 			input.x += 1
 		}
-		if rl.IsKeyDown(.I) {
-			g.game_state = .INVENTORY
-		}
+		// if rl.IsKeyDown(.I) {
+		// 	g.game_state = .INVENTORY
+		// }
 
-		if g.debug_mode {
-			if rl.IsKeyPressed(.O) {
-				g.game_scene = .SCENE_1
-			}
-			if rl.IsKeyPressed(.L) {
-				g.game_scene = .SCENE_2
-			}
-			if rl.IsKeyPressed(.K) {
-				g.game_scene = .SCENE_3
-			}
-		}
+		// if g.debug_mode {
+		// 	if rl.IsKeyPressed(.O) {
+		// 		g.game_scene = .SCENE_1
+		// 	}
+		// 	if rl.IsKeyPressed(.L) {
+		// 		g.game_scene = .SCENE_2
+		// 	}
+		// 	if rl.IsKeyPressed(.K) {
+		// 		g.game_scene = .SCENE_3
+		// 	}
+		// }
 
 		if rl.IsKeyPressed(.R) {
 			g.current_objective.complete = check_items()
@@ -1381,7 +1381,6 @@ draw :: proc(dt: f32) {
 
 	// rl.DrawRectangleV(g.player_pos, Vec2{10., 10.}, rl.RAYWHITE)
 
-
 	rl.BeginMode2D(ui_camera())
 
 	// NOTE: `fmt.ctprintf` uses the temp allocator. The temp allocator is
@@ -1402,6 +1401,17 @@ draw :: proc(dt: f32) {
 	// 	8,
 	// 	rl.WHITE,
 	// )
+
+	if g.game_scene == .SCENE_1 || g.game_scene == .SCENE_2 || g.game_scene == .SCENE_3 {
+		rl.DrawTextEx(
+			g.font,
+			fmt.ctprint("Press R to complete task"),
+			Vec2{5., 5.},
+			6,
+			1,
+			rl.WHITE,
+		)
+	}
 
 	if g.game_state == .DIALOGUE {
 		if g.cutscene_transition_timer > CUTSCENE_TRANSITION_TIME {
@@ -1718,7 +1728,7 @@ game_init :: proc() {
 		// You can put textures, sounds and music in the `assets` folder. Those
 		// files will be part any release or web build.
 		atlas                       = rl.LoadTextureFromImage(atlas_image),
-		music                       = rl.LoadMusicStream("assets/Mixdown - 09 s_hub_music.ogg"),
+		music                       = rl.LoadMusicStream("assets/Mixdown.ogg"),
 		sound_1                     = rl.LoadSound("assets/s_interact_1.wav"),
 		test_anim                   = animation_create(.Test),
 		current_dialog              = Dialog {
@@ -1999,6 +2009,7 @@ game_init :: proc() {
 	place_characters()
 	rl.UnloadImage(atlas_image)
 	rl.PlayMusicStream(g.music)
+	rl.SetSoundVolume(g.sound_1, 0.4)
 
 	game_hot_reloaded(g)
 }

@@ -55,7 +55,6 @@ Texture_Name :: enum {
 	Maggie,
 	Ranger_Sar_Fem,
 	Tree_3,
-	Cutscene_1,
 	Broken_Branches,
 	Moss_Log,
 	Footprints,
@@ -63,6 +62,7 @@ Texture_Name :: enum {
 	Lean_Two,
 	Tree_Background,
 	Truck,
+	Cutscene_1,
 }
 
 Atlas_Texture :: struct {
@@ -106,7 +106,6 @@ atlas_textures: [Texture_Name]Atlas_Texture = {
 	.Maggie = { rect = {502, 155, 9, 15}, offset_top = 1, offset_right = 3, offset_bottom = 0, offset_left = 4, document_size = {16, 16}, duration = 0.100},
 	.Ranger_Sar_Fem = { rect = {373, 153, 12, 16}, offset_top = 0, offset_right = 2, offset_bottom = 0, offset_left = 2, document_size = {16, 16}, duration = 0.100},
 	.Tree_3 = { rect = {321, 0, 40, 64}, offset_top = 0, offset_right = 4, offset_bottom = 0, offset_left = 4, document_size = {48, 64}, duration = 0.100},
-	.Cutscene_1 = { rect = {0, 193, 320, 150}, offset_top = 0, offset_right = 0, offset_bottom = 0, offset_left = 0, document_size = {320, 150}, duration = 0.100},
 	.Broken_Branches = { rect = {464, 172, 16, 13}, offset_top = 3, offset_right = 0, offset_bottom = 0, offset_left = 0, document_size = {16, 16}, duration = 0.100},
 	.Moss_Log = { rect = {478, 186, 16, 5}, offset_top = 11, offset_right = 0, offset_bottom = 0, offset_left = 0, document_size = {16, 16}, duration = 0.100},
 	.Footprints = { rect = {321, 121, 16, 16}, offset_top = 0, offset_right = 0, offset_bottom = 0, offset_left = 0, document_size = {16, 16}, duration = 0.100},
@@ -114,6 +113,7 @@ atlas_textures: [Texture_Name]Atlas_Texture = {
 	.Lean_Two = { rect = {466, 0, 32, 32}, offset_top = 0, offset_right = 0, offset_bottom = 0, offset_left = 0, document_size = {32, 32}, duration = 0.100},
 	.Tree_Background = { rect = {0, 0, 320, 192}, offset_top = 0, offset_right = 0, offset_bottom = 0, offset_left = 0, document_size = {320, 192}, duration = 0.100},
 	.Truck = { rect = {425, 164, 32, 15}, offset_top = 1, offset_right = 0, offset_bottom = 0, offset_left = 0, document_size = {32, 16}, duration = 0.100},
+	.Cutscene_1 = { rect = {0, 193, 320, 150}, offset_top = 0, offset_right = 0, offset_bottom = 0, offset_left = 0, document_size = {320, 150}, duration = 0.100},
 }
 
 Animation_Name :: enum {
